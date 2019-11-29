@@ -1,5 +1,5 @@
 import cv2
-from lines import LineSegmentation
+from Lines import LineSegmentation
 from Words import WordSegmentation
 from Characters import CharacterSegmentation
 

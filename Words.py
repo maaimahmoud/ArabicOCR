@@ -44,7 +44,7 @@ def WordSegmentation(img, lineNumber, saveResults=False):
     Q1 = sortedLengths[int(n/2)]
     Q2 = sortedLengths[int(n*3/2)]
 
-    IQR = (Q1+Q2)/2
+    IQR = int((Q1+Q2)/2)
     ###############
 
     filteredGaps = []

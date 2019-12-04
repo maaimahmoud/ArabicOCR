@@ -59,11 +59,14 @@ def CharacterSegmentation(wordImage):
     nonzeros = list(filter(lambda a: a != 0, VerticalProjection.astype('uint8')))
     MFV = np.bincount(nonzeros).argmax()
     
+
+    
+    word = cv2.cvtColor(word, cv2.COLOR_GRAY2RGB)
     # Getting the baseline index
     maxElement = np.amax(HorizontalProjection)
     index = np.where(HorizontalProjection == maxElement)
     BaselineIndex = index[0][0]
-    cv2.line(word, (0, index[0]), (wordImage.shape[1], BaselineIndex), (0,255,0), 1)
+    # cv2.line(word, (0, index[0]), (wordImage.shape[1], BaselineIndex), (0,255,0), 1)
     
     # Getting the index of the maximum horizontal transitions above the baseline
     maxTransitions = np.amax(HorizontalTransition[:BaselineIndex])
@@ -82,12 +85,63 @@ def CharacterSegmentation(wordImage):
         elif(lastPixel == 0 and I[MaxTransitionsIndex,col] == 1):
             endIndices.append(col)
         lastPixel = I[MaxTransitionsIndex,col]
+        
+    if(startIndices[0]<endIndices[0]):
+        endIndices.pop(0)
+    
+    if(endIndices[len(endIndices)-1]>startIndices[len(startIndices)-1]):    
+        startIndices.pop(-1)
+    
+    
 
-    # startIndices.pop(-1)
-    # endIndices.pop(0)
+
+    # Identifying the cut index for each separation region
+    cutIndices = [0]
+    
+    for i in range(len(startIndices)-1):
+        
+        start = startIndices[i]
+        end = endIndices[i]
+        cut = int((start - end) /2) + end
+        found = 0 
+        
+        for col in reversed(range(end, start)):
+            if(VerticalProjection[col] == 0):
+                found = 1
+                cut = col
+        
+        if(found == 0 and abs(VerticalProjection[cut] - MFV) > 2):
+            for col in reversed(range(end,cut)):
+                if(abs(VerticalProjection[col] - MFV) < 2):
+                    cut = col
+                    found = 1
+                    break
+            if(found == 0):
+                for col in range(cut,start):
+                    if(abs(VerticalProjection[col] - MFV) < 2):
+                        cut = col
+                        found = 1
+                        break
+        if(VerticalTransition[cut]<=2):
+            cutIndices.append(cut)
+    
+
+    VT = []
+    # for s in startIndices:
+    #     cv2.circle(word, (s,MaxTransitionsIndex), 1, (255,0,0))
+    # for e in endIndices:
+    #     cv2.circle(word, (e,MaxTransitionsIndex), 1, (0,255,0))   
+    for c in cutIndices:     
+        cv2.line(word, (c, 0), (c, wordImage.shape[0]), (0,0,255), 1)
+        VT.append(VerticalTransition[c])
     
     print(startIndices)
     print(endIndices)
+    print(cutIndices)
+    print("MFV ",MFV)
+    print(VerticalProjection)
+    print(VT)
+    
     # plot image
     cv2.imshow('Word',word)
     cv2.waitKey(0)    
@@ -101,4 +155,4 @@ def CharacterSegmentation(wordImage):
 
 
 if __name__ == "__main__":
-    CharacterSegmentation(cv2.imread("PreprocessingOutput/WordSegmentation/2-4.png"))
+    CharacterSegmentation(cv2.imread("PreprocessingOutput/WordSegmentation/9-5.png"))

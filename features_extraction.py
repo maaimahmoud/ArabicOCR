@@ -14,38 +14,55 @@ def features_extraction(image, black_background):
 
     if black_background:
         binary_img = 1-binary_img
-
-    pixels_count = height * width
-    white_pixels = cv2.countNonZero(binary_img)                        # number of white pixels
-    black_pixels = pixels_count - white_pixels                         # number of black pixels
-    features.append(black_pixels / white_pixels)
-
-    # Calculate vertical and horizontal transitions count
+    else:
+        inverted_gray = 255-gray
+    
+    black_pixels = 0                                                   # number of black pixels
+    B1, B2, B3, B4 = 0, 0, 0, 0                                        # number of black pixels in each quarter
+    cx = 0
+    cy = 0
+    # Calculate black pixels count, vertical, horizontal transitions count
     horizontal_transition_count = 0
     vertical_transition_count = 0
     VerticalLastPixel = np.ones(width)
     lastPixel = 1
     for row in range(height):
             for col in range(width):
+                if binary_img[row, col] == 0:
+                    black_pixels += 1
+                    if row < int(height/2): 
+                        if col < int(width/2):
+                            B1 += 1
+                        else:
+                            B2 += 1
+                    else:
+                        if col < int(width/2):
+                            B3 += 1
+                        else:
+                            B4 += 1 
+                    # Determine center of mass (of black ink)
+                    cx = cx + col
+                    cy = cy + row
                 if(lastPixel != binary_img[row,col]):
                     horizontal_transition_count += 1
                 lastPixel = binary_img[row,col]
                 if(VerticalLastPixel[col] != binary_img[row,col]):
                     vertical_transition_count += 1
                 VerticalLastPixel[col] = binary_img[row,col]
+
+    pixels_count = height * width
+    white_pixels = pixels_count - black_pixels                         # number of white pixels
+    features.append(black_pixels / white_pixels)
+
     # append vertical and horizontal transitions count to feature vector
     features.append(vertical_transition_count)
     features.append(horizontal_transition_count)
 
     quarter_pixels = pixels_count / 4
-    W1 = cv2.countNonZero(binary_img[0:int(height/2), 0:int(width/2)])           # number of white pixels in first quarter of image
-    B1 = quarter_pixels - W1                                                     # number of black pixels in first quarter of image
-    W2 = cv2.countNonZero(binary_img[0:int(height/2), int(width/2):width])           
-    B2 = quarter_pixels - W2     
-    W3 = cv2.countNonZero(binary_img[int(height/2):height, 0:int(width/2)])           
-    B3 = quarter_pixels - W3
-    W4 = white_pixels - (W1 + W2 + W3)
-    B4 = quarter_pixels - W4 
+    W1 = quarter_pixels - B1                                                     # number of white pixels in first quarter of image
+    W2 = quarter_pixels - B2     
+    W3 = quarter_pixels - B3
+    W4 = quarter_pixels - B4 
 
     # avoid division by zero
     if W1 == 0:
@@ -64,27 +81,18 @@ def features_extraction(image, black_background):
         B4 =1 
 
     features.extend([B1/W1, B2/W2, B3/W3, B4/W4, B1/B2, B1/B3, B1/B4, B2/B3, B2/B4, B3/B4])
-
-    # Determine center of mass (of black ink)
-    sx = 0
-    sy = 0
-    for y in range(height):
-        for x in range(width):
-            if np.all(binary_img[y,x] == 0):
-                sx = sx + x
-                sy = sy + y
+    
+    # append center of mass to feature vector
     if black_pixels == 0:
         black_pixels =1
-    centerX = int(sx / black_pixels)
-    centerY = int(sy / black_pixels)
+    centerX = int(cx / black_pixels)
+    centerY = int(cy / black_pixels)
 
     features.extend([centerX/width, centerY/height])
 
     # Calculate horizontal and vertical histogram
-    if not black_background:
-        gray = 255-gray
-    img_row_sum = np.sum(gray, axis=1).tolist()                                     
-    img_col_sum = np.sum(gray, axis=0).tolist()                   
+    img_row_sum = np.sum(inverted_gray, axis=1).tolist()                                     
+    img_col_sum = np.sum(inverted_gray, axis=0).tolist()                   
     img_row_sum[:] = [x / width for x in img_row_sum]                                # normalization
     img_col_sum[:] = [x / height for x in img_col_sum]
 
@@ -104,7 +112,7 @@ def features_extraction(image, black_background):
             features.append(0)
     return features
 
-img = cv2.imread("Amiri-BoldIsolated_label_4_size_72.png")
+img = cv2.imread("geem2.png")
 features = features_extraction(img, False)
 print(features)
 

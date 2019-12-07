@@ -99,5 +99,6 @@ def LineSegmentation(img, saveResults=True):
     #     cv2.imwrite("result.png", rotated)
 
     return lines
-
-LineSegmentation(cv2.imread("../Dataset/scanned/capr1.png"),True)
+if __name__ == "__main__":
+    
+    LineSegmentation(cv2.imread("../Dataset/scanned/capr1.png"),True)

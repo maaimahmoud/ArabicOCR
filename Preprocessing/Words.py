@@ -1,9 +1,10 @@
 import numpy as np
 import cv2
 
-def WordSegmentation(img, lineNumber, saveResults=False):
+def WordSegmentation(img, lineNumber, saveResults=True):
 
     I = np.asarray(img)
+
 
     # Calculate Vertical Projection
 
@@ -63,8 +64,11 @@ def WordSegmentation(img, lineNumber, saveResults=False):
     for currentGap in reversed(filteredGaps):
         words += [I[:,currentGap:previousGap]]
         if saveResults:
-            cv2.imwrite("PreprocessingOutput/WordSegmentation/"+str(lineNumber)+'-'+str(i)+".png",I[:,currentGap:previousGap])
+            cv2.imwrite("../PreprocessingOutput/WordSegmentation/"+str(lineNumber)+'-'+str(i)+".png",I[:,currentGap:previousGap])
             i += 1
         previousGap = currentGap
             
     return words
+
+if __name__ == "__main__":
+    WordSegmentation(cv2.imread('../Dataset/scanned/capr1.png'))

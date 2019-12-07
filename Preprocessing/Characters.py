@@ -131,6 +131,9 @@ def CharacterSegmentation(wordImage, lineNumber=0, wordNumber =0):
     BaselineIndex = index[0][0]
     
     # Getting the index of the maximum horizontal transitions above the baseline
+    if BaselineIndex == 0:
+        return wordImage
+        
     maxTransitions = np.amax(HorizontalTransition[:BaselineIndex])
     index = np.where(HorizontalTransition == maxTransitions)
     MaxTransitionsIndex = index[0][0]
@@ -158,12 +161,13 @@ def CharacterSegmentation(wordImage, lineNumber=0, wordNumber =0):
             endIndices.append(col)
         lastPixel = I[MaxTransitionsIndex,col]
 
-    if(startIndices[0] - 2 < endIndices[0]):
-        endIndices.pop(0)
-    
-    if(endIndices[-1] > startIndices[-1] - 2):    
-        startIndices.pop(-1)
 
+    if( len(startIndices) >0 and  len(endIndices)>0 ):
+        if(startIndices[0] - 2 < endIndices[0]):
+            endIndices.pop(0)
+    if( len(startIndices) >1 and  len(endIndices)>1 ):
+        if(endIndices[-1] > startIndices[-1] - 2):    
+            startIndices.pop(-1)
 
     # -------------------------------------------------------------------------------------------------
     # C U T   I N D I C E S :
@@ -202,8 +206,8 @@ def CharacterSegmentation(wordImage, lineNumber=0, wordNumber =0):
     
     # L O O P
     #--------    
-    
-    for i in range(len(startIndices)):
+    irange=min(len(startIndices),len(endIndices))
+    for i in range(irange):
     
     
         # V A R I A B L E S
@@ -368,7 +372,9 @@ def CharacterSegmentation(wordImage, lineNumber=0, wordNumber =0):
     skeletonized *= 255
 
     VT = []
-    for i in range(len(startIndices)):
+    irange=min(len(startIndices),len(endIndices))
+
+    for i in range(irange):
         wordDots[MaxTransitionsIndex+(i%2),startIndices[i]]= [255*(i%2), 0,255*((i+1)%2)]
         wordDots[MaxTransitionsIndex+(i%2),endIndices[i]]= [255*(i%2), 0,255*((i+1)%2)]
     for c, strock in cutIndices:     
@@ -395,6 +401,7 @@ if __name__ == "__main__":
    
     testCase = sys.argv[1]
     img = cv2.imread("../PreprocessingOutput/WordSegmentation/"+testCase+".png")
+    
     
     # cv2.imshow('original', img)
     # cv2.waitKey(0)

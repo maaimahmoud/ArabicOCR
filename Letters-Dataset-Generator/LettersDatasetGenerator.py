@@ -31,7 +31,12 @@ for Index, Letter in enumerate(Letters):
     Letters[Index] = [Input for Input in Letter.split(' ') if Input.replace(' ', '') != '']
 
 id = 0
+letter_start_id = 0
+count = 0
+supported_count = 0
+
 for Letter in Letters:
+    id = letter_start_id
     integer = int(Letter[0], 16)
 
     if len(Letter[1:]) == 0:
@@ -49,16 +54,16 @@ for Letter in Letters:
             ('Middle', 'ـ' + character + 'ـ'),
             ('Beginning', character + 'ـ')]):
             if len(Letter[1:]) <= Index:
-                    break
+                break
 
             Text = arabic_reshaper.reshape(Text)
             Text = get_display(Text, base_dir='R')
-
+        
+            count += 1
             if isTextSupported(FontsDir + '/' + FontFile, Text) is False:
                 continue
-
             W, H = 50, 50                   # image dimensions
-            for size in range(12, 33):      # font size range
+            for size in range(12, 32):      # font size range
 
                 Font = ImageFont.truetype(FontsDir + '/' + FontFile, size)
                 Img = Image.new("RGB", (W, H),(255,255,255))
@@ -73,4 +78,8 @@ for Letter in Letters:
                 Img = cv2.cvtColor(Img, cv2.COLOR_BGR2GRAY)
                 
                 cv2.imwrite(DatasetDir + '/' + string + '/' + FontFile[:FontFile.rfind('.')] + Prefix + "_label_" + str(id) + "_size_" + str(size) + ".png", Img)
-    id += 1
+            id += 1
+        supported_count = count
+        count = 0
+        id = letter_start_id
+    letter_start_id += supported_count

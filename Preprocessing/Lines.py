@@ -39,36 +39,36 @@ def LineSegmentation(img, saveResults=True):
 
     ## (4) Find rotated matrix, do rotation
     # ################## Method 1 ##################
-    # M = cv2.getRotationMatrix2D((cx,cy), ang, 1.0)
-    # rotated = cv2.warpAffine(threshed, M, (img.shape[1], img.shape[0]))
-    # pts = cv2.findNonZero(rotated)
-    # ret = cv2.minAreaRect(pts)
+    M = cv2.getRotationMatrix2D((cx,cy), ang, 1.0)
+    rotated = cv2.warpAffine(threshed, M, (img.shape[1], img.shape[0]))
+    pts = cv2.findNonZero(rotated)
+    ret = cv2.minAreaRect(pts)
     
     # ################## Method 2 ##################
-    skewImage = threshed
-    ht, wd = skewImage.shape
-    bin_img = 1 - (threshed.reshape((ht, wd)) / 255.0)
+    # skewImage = threshed
+    # ht, wd = skewImage.shape
+    # bin_img = 1 - (threshed.reshape((ht, wd)) / 255.0)
 
-    delta = 1
-    limit = 5
-    angles = np.arange(-limit, limit+delta, delta)
-    scores = []
-    for angle in angles:
-        hist, score = find_score(bin_img, angle)
-        scores.append(score)
+    # delta = 1
+    # limit = 5
+    # angles = np.arange(-limit, limit+delta, delta)
+    # scores = []
+    # for angle in angles:
+    #     hist, score = find_score(bin_img, angle)
+    #     scores.append(score)
 
-    best_score = max(scores)
-    best_angle = angles[scores.index(best_score)]
+    # best_score = max(scores)
+    # best_angle = angles[scores.index(best_score)]
     
-    # correct skew
-    data = inter.rotate(bin_img, best_angle, reshape=False, order=0, cval = 1)
-    rotatedImage = 255*data
-    rotated = 255 - rotatedImage
+    # # correct skew
+    # data = inter.rotate(bin_img, best_angle, reshape=False, order=0, cval = 1)
+    # rotatedImage = 255*data
+    # rotated = 255 - rotatedImage
     
     # cv2.imshow('original',threshed)
     # cv2.imshow('rotated',rotated)
     # cv2.waitKey(0)    
-    ###################################    
+    ##################################    
     
     ## (5) find and draw the upper and lower boundary of each lines
     hist = cv2.reduce(rotated,1, cv2.REDUCE_AVG).reshape(-1)
@@ -100,4 +100,4 @@ def LineSegmentation(img, saveResults=True):
 
     return lines
 
-# LineSegmentation(cv2.imread("Dataset/scanned/capr3.png"),True)
+LineSegmentation(cv2.imread("../Dataset/scanned/capr1.png"),True)

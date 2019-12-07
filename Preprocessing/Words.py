@@ -3,29 +3,23 @@ import cv2
 
 def WordSegmentation(img, lineNumber, saveResults=True):    
     
-    bounding_box = cv2.findNonZero(img)
-    x, y, w, h = cv2.boundingRect(bounding_box) # Find minimum spanning bounding box
-    LINE_MARGIN = 1
-    cropped = img[max(0,y-LINE_MARGIN):min(img.shape[0], y+h+LINE_MARGIN), max(0,x-LINE_MARGIN):min(img.shape[1],x+w+LINE_MARGIN)] 
+    # cv2.imshow('original', img)
+    # cv2.waitKey(0)
+
+    # bounding_box = cv2.findNonZero(img)
+    # x, y, w, h = cv2.boundingRect(bounding_box) # Find minimum spanning bounding box
+    # LINE_MARGIN = 1
+    # img = img[max(0,y-LINE_MARGIN):min(img.shape[0], y+h+LINE_MARGIN), max(0,x-LINE_MARGIN):min(img.shape[1],x+w+LINE_MARGIN)] 
     
-    I = np.asarray(cropped)
+    I = np.asarray(img)
 
     # Calculate Vertical Projection
+    VerticalProjection = cv2.reduce(img, 0, cv2.REDUCE_AVG).reshape(-1)
 
-    # VerticalProjection = np.zeros(I.shape[1])
-
-    # for col in range(I.shape[1]):
-    #     for row in range(I.shape[0]):
-    #         VerticalProjection[col] += I[row, col]
-
-    VerticalProjection = cv2.reduce(I, 0, cv2.REDUCE_AVG).reshape(-1)
-
-    old = VerticalProjection.copy()
-    # VerticalProjection = cv2.GaussianBlur(VerticalProjection,(4,1),cv2.BORDER_DEFAULT)
+    # Smoothing Vertical Projection
     avgFilter = np.array([1/3, 1/3, 1/3])
     VerticalProjection = np.convolve(VerticalProjection, avgFilter, 'same')
-    if (old == VerticalProjection).all():
-        print("mt8ayrtsh")
+
     ####################################
     
     # Gaps Space Locations
@@ -50,21 +44,20 @@ def WordSegmentation(img, lineNumber, saveResults=True):
     # Gap Length Filtration
     
     # Calculate IQR
-    n = len(Lengths)/2
-    sortedLengths = Lengths.copy()
-    sortedLengths.sort()
+    # n = len(Lengths)/2
+    # sortedLengths = Lengths.copy()
+    # sortedLengths.sort()
 
-    Q1 = sortedLengths[int(n/2)]
-    Q2 = sortedLengths[int(n*3/2)]
-
+    # Q1 = sortedLengths[int(n/2)]
+    # Q2 = sortedLengths[int(n*3/2)]
     # IQR = int((Q1+Q2)/2)
-    IQR = 1
+    IQR = 0
     ###############
 
     filteredGaps = []
 
     for i in range(len(Gaps)):
-        if Lengths[i] >= IQR:
+        if Lengths[i] > IQR:
             filteredGaps += [Gaps[i]]
 
     ####################################    

@@ -87,7 +87,7 @@ def LineSegmentation(img, saveResults=True):
     for y in range(len(uppers)-1):
         lines += [rotated[uppers[y]:lowers[y]+1,:]]
         # if saveResults:
-        cv2.imwrite("PreprocessingOutput/LineSegmentation/line"+str(y)+".png",rotated[uppers[y]:lowers[y]+1,:])
+        cv2.imwrite("../PreprocessingOutput/LineSegmentation/line"+str(y)+".png",rotated[uppers[y]:lowers[y]+1,:])
     
     # if saveResults:
     #     for y in uppers:

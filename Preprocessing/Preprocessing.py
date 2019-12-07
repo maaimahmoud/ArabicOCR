@@ -6,7 +6,7 @@ from Characters import CharacterSegmentation
 
 def Preprocssing(img):
     # Segment paragraph into lines    
-    lines = LineSegmentation(img, saveResults=False)
+    lines = LineSegmentation(img, saveResults=True)
 
     # Segment lines into words
     words = []
@@ -18,7 +18,7 @@ def Preprocssing(img):
     # Segment words into characters
     for i in range(len(words)):
         for j in range(len(words[i])):
-                print(i, j)
+                # print(i, j)
                 characters += [CharacterSegmentation(cv2.cvtColor(np.array(words[i][j], dtype=np.uint8), cv2.COLOR_GRAY2BGR), lineNumber=i, wordNumber =j)]
 
     return characters
@@ -26,7 +26,7 @@ def Preprocssing(img):
 
 if __name__ == "__main__":
     # Read Image    
-    img = cv2.imread("../Dataset/scanned/capr6.png")
+    img = cv2.imread("../Dataset/scanned/capr1.png")
 
     # Show Paragraph
     # cv2.imshow('OriginalImage',img)

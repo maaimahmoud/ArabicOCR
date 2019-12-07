@@ -89,9 +89,6 @@ def imageAnalysis(imgArr, xstart, xend, ystart, yend):
 
 def CharacterSegmentation(wordImage, lineNumber=0, wordNumber =0):
 
-    cv2.imshow('original', wordImage)
-    cv2.waitKey(0)
-
     # I M A G E  P R E P R O C E S S I N G :
     # ---------------------------------------
 
@@ -403,4 +400,4 @@ if __name__ == "__main__":
     # cv2.waitKey(0)
 
     CharacterSegmentation(img)
-   
+      

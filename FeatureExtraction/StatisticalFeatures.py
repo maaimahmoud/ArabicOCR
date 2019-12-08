@@ -9,17 +9,21 @@ class StatisticalFeatures():
         
     def getFeatures(self, image, black_background):
         features = []                                               # features vector
-        height, width = image.shape
-        features.append(height / width)
+        if len(image.shape) == 3:
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        else:
+            gray = image
 
-        # get gray and binary version of image
-        #gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        _, binary_img = cv2.threshold(image, 128, 1, cv2.THRESH_BINARY)
+        height, width = gray.shape
+        features.append(height/width)
+
+        # binarize image
+        _, binary_img = cv2.threshold(gray, 128, 1, cv2.THRESH_BINARY)
 
         if black_background:
             binary_img = 1-binary_img
         else:
-            inverted_gray = 255-image
+            inverted_gray = 255-gray
         
         black_pixels = 0                                                   # number of black pixels
         B1, B2, B3, B4 = 0, 0, 0, 0                                        # number of black pixels in each quarter
@@ -56,6 +60,8 @@ class StatisticalFeatures():
 
         pixels_count = height * width
         white_pixels = pixels_count - black_pixels                         # number of white pixels
+        if white_pixels == 0:
+            white_pixels =1            
         features.append(black_pixels / white_pixels)
 
         # append vertical and horizontal transitions count to feature vector

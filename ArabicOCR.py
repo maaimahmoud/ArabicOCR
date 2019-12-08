@@ -3,8 +3,8 @@
 # featureMethod: StatisticalFeatures - NewGeometricFeatures
 # classifier: SVM
 
-# TRAINING_DATASET = './Letters-Dataset-Generator/LettersDataset'
-TRAINING_DATASET = './Dataset/scanned'
+TRAINING_DATASET = './Letters-Dataset-Generator/LettersDataset'
+#TRAINING_DATASET = './Dataset/scanned'
 TESTING_DATASET = './Dataset/Testing'
 
 
@@ -44,8 +44,8 @@ def readImagesInFolder(folder):
     filesNames = []
     image_count = 0
     for img in folders:
-        # only read 100 images
-        if image_count == 100:
+        # only read 6 images
+        if image_count == 6:
             return images, y_vals, filesNames
         filesNames += [img[img.index("scanned/") + len("scanned/"):]]
         image_count += 1
@@ -60,7 +60,7 @@ def imagePreprocessing(img):
     for i in range(len(lines)):
         words += [WordSegmentation(lines[i], i, saveResults=False)]
 
-    print(len(words), len(words[0]), len(words[1]))
+    #print(len(words), len(words[0]), len(words[1]))
     characters = []
     # Segment words into characters
     for i in range(len(words)):
@@ -90,7 +90,7 @@ if __name__ == "__main__":
     # Import classifier Type
     classifierModule = import_module('Classification.' + args.classifier) # Dynamically load the classifier module
     classifierClass = getattr(classifierModule, args.classifier)
-    classifier = classifierClass(featuresNumber = features.featuresNumber)
+    classifier = classifierClass()
     ###########################
 
     mode = int(input("1.Train\n2.Test existing Model\n"))
@@ -99,8 +99,8 @@ if __name__ == "__main__":
         # set start time
         start_time = timeit.default_timer()
 
-        trainingImages, classifier.y_vals, filesNames = readImagesInFolder(TRAINING_DATASET)
-        #trainingImages, classifier.y_vals, __ = readImages(TRAINING_DATASET, trainTest = 0)
+        #trainingImages, classifier.y_vals, filesNames = readImagesInFolder(TRAINING_DATASET)
+        trainingImages, classifier.y_vals, __ = readImages(TRAINING_DATASET, trainTest = 0)
         print('-----------------------------')
         
         print('Feature Extraction Phase')
@@ -111,8 +111,8 @@ if __name__ == "__main__":
             for r, d, f in os.walk(TRAINING_DATASET):
                 for file in f:
                     if '.png' in file:
-                        # only read first 100 images
-                        if image_count == 100 :
+                        # only read first 6 images
+                        if image_count == 6 :
                             exit_loop = True
                             break
                         image_count += 1

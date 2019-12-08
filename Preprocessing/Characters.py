@@ -130,10 +130,10 @@ def CharacterSegmentation(wordImage, lineNumber=0, wordNumber =0):
     index = np.where(HorizontalProjection == maxElement)
     BaselineIndex = index[0][0]
     
-    # Getting the index of the maximum horizontal transitions above the baseline
     if BaselineIndex == 0:
-        return gray
-        
+        return [gray]
+
+    # Getting the index of the maximum horizontal transitions above the baseline
     maxTransitions = np.amax(HorizontalTransition[:BaselineIndex])
     index = np.where(HorizontalTransition == maxTransitions)
     MaxTransitionsIndex = index[0][0]
@@ -369,9 +369,9 @@ def CharacterSegmentation(wordImage, lineNumber=0, wordNumber =0):
     Characters = []	
     for i in range(len(cutIndices)):     	
         if(i==len(cutIndices)-1):	
-            character = gray[:,0:cutIndices[i][0]]    	
+            character = wordImage[:,0:cutIndices[i][0]]    	
         else:	
-            character = gray[:,cutIndices[i+1][0]:cutIndices[i][0]]	
+            character = wordImage[:,cutIndices[i+1][0]:cutIndices[i][0]]	
         Characters.append(character)	
     return Characters	
 

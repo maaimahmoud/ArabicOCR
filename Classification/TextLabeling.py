@@ -41,16 +41,20 @@ class Letter(Enum):
     ء = [116]
     ؤ = [117,118]
     ئ = [119,120,121,122]
+    INVALID = -1
 
 terminal_characters = ["ا", "أ", "آ", "إ", "د", "ذ", "ر", "ز", "و", "ؤ", "ة", "ء"]
 
 def get_labels(doc):
     labels = []
+    invalid_end = False
     i = 0
     for word in doc.split():
+        if word[-1] not in Letter.__members__:
+            word = word[:-1]
+            invalid_end = True
         while i < len(word):
             if word[i] in Letter.__members__:
-                #print(word[i])
                 label = Letter[word[i]].value
                 if word[i] == "ل" and i+1 < len(word) and word[i+1] in ["ا", "أ", "آ"]:   # special case "لا"
                     comb = word[i] + word[i+1]
@@ -81,8 +85,13 @@ def get_labels(doc):
                             labels.append(label[1])
                         else:
                             labels.append(label[2])
+            else:
+                labels.append(Letter.INVALID)
             i += 1
         i = 0
+        if invalid_end:
+            labels.append(Letter.INVALID)
+            invalid_end = False
     return labels
 
 if __name__ == "__main__":    

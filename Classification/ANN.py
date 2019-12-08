@@ -9,7 +9,7 @@ from keras.layers import Dense
 from sklearn.model_selection import train_test_split
 
 class ANN():
-    def __init__(self):
+    def __init__(self, featuresNumber):
         super().__init__()
 
         self.x_vals = [] # Features from input images
@@ -21,19 +21,20 @@ class ANN():
         self.x_test_vals = []  # features for testing dataset
         self.y_test_vals = []  # testing dataset labels
 
+        self.featuresNumber = featuresNumber
 
     def train(self):
 
-        print(set(self.y_vals))   
-        # n_classes = len(set(self.y_vals))
+        # print(set(self.y_vals))   
+        n_classes = len(set(self.y_vals))
         # print("n_classes = ", n_classes)
-        n_classes = 31
+        # n_classes = 31
 
         # Initialising the ANN
         self.classifier = Sequential()
 
         # Adding the input layer and the first hidden layer
-        self.classifier.add(Dense(units = 6, kernel_initializer = 'uniform', activation = 'relu', input_dim = 56))
+        self.classifier.add(Dense(units = 6, kernel_initializer = 'uniform', activation = 'relu', input_dim = self.featuresNumber))
 
         # Adding the output layer
         # self.classifier.add(Dense(units = 1, kernel_initializer = 'uniform', activation = 'sigmoid'))

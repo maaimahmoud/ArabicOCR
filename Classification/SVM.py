@@ -129,7 +129,7 @@ import pickle
 
 class SVM():
 
-    def __init__(self):
+    def __init__(self, featuresNumber):
         super().__init__()
 
         self.x_vals = [] # Features from input images

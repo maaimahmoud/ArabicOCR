@@ -3,8 +3,8 @@
 # featureMethod: StatisticalFeatures - NewGeometricFeatures
 # classifier: SVM
 
-TRAINING_DATASET = './Letters-Dataset-Generator/LettersDataset'
-# TRAINING_DATASET = './Dataset/scanned'
+# TRAINING_DATASET = './Letters-Dataset-Generator/LettersDataset'
+TRAINING_DATASET = './Dataset/scanned'
 TESTING_DATASET = './Dataset/Testing'
 
 
@@ -51,7 +51,6 @@ def imagePreprocessing(img):
     for i in range(len(words)):
         currentLine = []
         for j in range(len(words[i])):
-            print(i,j)
             currentLine += [CharacterSegmentation(cv2.cvtColor(np.array(words[i][j], dtype=np.uint8), cv2.COLOR_GRAY2BGR), lineNumber=i, wordNumber =j)]
         characters += [currentLine]
     return characters # [[[, , , characters], , , words] , , , lines] 
@@ -76,7 +75,7 @@ if __name__ == "__main__":
     # Import classifier Type
     classifierModule = import_module('Classification.' + args.classifier) # Dynamically load the classifier module
     classifierClass = getattr(classifierModule, args.classifier)
-    classifier = classifierClass()
+    classifier = classifierClass(featuresNumber = features.featuresNumber)
     ###########################
 
     mode = int(input("1.Train\n2.Test existing Model\n"))
@@ -111,6 +110,7 @@ if __name__ == "__main__":
                 for line in segmented:
                     for word in line:
                         for char in word:
+                            print('Currently processing image '+filesNames[0]+' line #', segmented.index(line), ' word #', line.index(word),' char #', word.index(char))
                             currentCharFeature = features.getFeatures(char, False)
                             classifier.x_vals.append(currentCharFeature)
                         # f.write(' ')

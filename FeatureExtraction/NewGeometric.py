@@ -4,11 +4,16 @@ import collections
 
 class NewGeometric():
 
-    def getFeatures(self, gray):
+    def __init__(self):
+        self.featuresNumber = 19
+
+    def getFeatures(self, image, black_background = False, showResults = False):
         features = []
 
         # 1) Convert the input image to a binary image with 0 and 1.
-
+        # cv2.imshow('mai', gray)
+        # cv2.waitKey(0)
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         ################# fill holes #################
         # 2) Remove black holes with values 0 that surround with 1.
 
@@ -26,12 +31,13 @@ class NewGeometric():
         # Combine the two images to get the foreground.
         im_out = im_th | im_floodfill_inv
         gray = im_out
-        cv2.imshow('RemoveHoles',gray)
-        cv2.moveWindow('RemoveHoles', 100,100)
-        # cv2.imshow("Thresholded Image", im_th)
-        # cv2.imshow("Floodfilled Image", im_floodfill)
-        # cv2.imshow("Inverted Floodfilled Image", im_floodfill_inv)
-        # cv2.imshow("Foreground", im_out)    
+        if showResults:
+            cv2.imshow('RemoveHoles',gray)
+            cv2.moveWindow('RemoveHoles', 100,100)
+            # cv2.imshow("Thresholded Image", im_th)
+            # cv2.imshow("Floodfilled Image", im_floodfill)
+            # cv2.imshow("Inverted Floodfilled Image", im_floodfill_inv)
+            # cv2.imshow("Foreground", im_out)    
 
         ################# Remove black spaces #################
         # gray = 255*(gray < 128).astype(np.uint8) # To invert the text to white
@@ -40,14 +46,16 @@ class NewGeometric():
         CHAR_MARGIN = 1
         cropped = gray[max(0,y-CHAR_MARGIN):min(gray.shape[0], y+h+CHAR_MARGIN), max(0,x-CHAR_MARGIN):min(gray.shape[1],x+w+CHAR_MARGIN)] # 0, 255
         # I = np.asarray(cropped)
-        cv2.imshow('RemoveSpaces',cropped)
-        cv2.moveWindow('RemoveSpaces', 300,100)
+        if showResults:
+            cv2.imshow('RemoveSpaces',cropped)
+            cv2.moveWindow('RemoveSpaces', 300,100)
         ################# Resize Image #################
         # 3) Resize of the input image to 100 x 60 pixels.
         resized = cv2.resize(cropped, (60, 100)) # 7, 11 , 10 ,255, 0
         th, resized = cv2.threshold(resized, 127, 255, cv2.THRESH_BINARY) # 0, 255
-        cv2.imshow('ResizeImage',resized)
-        cv2.moveWindow('ResizeImage', 500,100)
+        if showResults:
+            cv2.imshow('ResizeImage',resized)
+            cv2.moveWindow('ResizeImage', 500,100)
         ################# Divide to 4 regions #################
         # 4) Find the centre of the resized image (cx, cy).
         current_image = resized.copy()
@@ -78,8 +86,9 @@ class NewGeometric():
         if (1 not in myDict):
             myDict[1] = 0
         C1 = myDict[1]
-        cv2.imshow('C1', C1Image)
-        cv2.moveWindow('C1', 100,700)
+        if showResults:
+            cv2.imshow('C1', C1Image)
+            cv2.moveWindow('C1', 100,700)
         
         C2Image = current_image[:center[0],:center[1]]
         unique, counts = np.unique(C2Image, return_counts=True)
@@ -87,8 +96,9 @@ class NewGeometric():
         if (1 not in myDict):
             myDict[1] = 0
         C2 = myDict[1]
-        cv2.imshow('C2', C2Image)
-        cv2.moveWindow('C2', 300,700)
+        if showResults:
+            cv2.imshow('C2', C2Image)
+            cv2.moveWindow('C2', 300,700)
 
         C3Image = current_image[ center[0]: , center[1]: ]
         unique, counts = np.unique(C3Image, return_counts=True)
@@ -96,8 +106,9 @@ class NewGeometric():
         if (1 not in myDict):
             myDict[1] = 0
         C3 = myDict[1]
-        cv2.imshow('C3',C3Image)
-        cv2.moveWindow('C3', 500,700)
+        if showResults:
+            cv2.imshow('C3',C3Image)
+            cv2.moveWindow('C3', 500,700)
         
         C4Image = current_image[ center[0]: , :center[1]]
         unique, counts = np.unique(C4Image, return_counts=True)
@@ -105,17 +116,19 @@ class NewGeometric():
         if (1 not in myDict):
             myDict[1] = 0
         C4 = myDict[1]
-        cv2.imshow('C4', C4Image)
-        cv2.moveWindow('C4', 700,700)
+        if showResults:
+            cv2.imshow('C4', C4Image)
+            cv2.moveWindow('C4', 700,700)
 
         features += [C1, C2, C3, C4] #F2, F3, F4, F5
 
 
         fourRegionsOutput = current_image.copy() # 0, 1
-        cv2.line(current_image, left, right, (255,255,255), 2)
-        cv2.line(current_image, up, down, (255,255,255), 2)
-        cv2.imshow('C1:C4',current_image)
-        cv2.moveWindow('C1:C4', 700,100)
+        if showResults:
+            cv2.line(current_image, left, right, (255,255,255), 2)
+            cv2.line(current_image, up, down, (255,255,255), 2)
+            cv2.imshow('C1:C4',current_image)
+            cv2.moveWindow('C1:C4', 700,100)
 
 
         ################# Edge Detection #################
@@ -123,12 +136,14 @@ class NewGeometric():
         current_image = fourRegionsOutput.copy()
         sobelx = cv2.Sobel(current_image, cv2.CV_8U, dx=0, dy=1, ksize=5)
         sobely = cv2.Sobel(current_image, cv2.CV_8U, dx=1, dy=0, ksize=5)
-        cv2.imshow('SobelEdgeDetection',sobelx+sobely)
-        cv2.moveWindow('SobelEdgeDetection', 900,100)
+        if showResults:
+            cv2.imshow('SobelEdgeDetection',sobelx+sobely)
+            cv2.moveWindow('SobelEdgeDetection', 900,100)
         
         laplacian = cv2.Laplacian(current_image,cv2.CV_64F)
-        cv2.imshow('LaplacianEdgeDetection', laplacian)
-        cv2.moveWindow('LaplacianEdgeDetection', 1100,100)
+        if showResults:
+            cv2.imshow('LaplacianEdgeDetection', laplacian)
+            cv2.moveWindow('LaplacianEdgeDetection', 1100,100)
 
         # 8) Four parts (E1:4) divided image edges and the area is calculate for all part.
         current_image = laplacian.copy()
@@ -146,8 +161,9 @@ class NewGeometric():
         if (1 not in myDict):
             myDict[1] = 0
         E1 = myDict[1]
-        cv2.imshow('E1', E1Image)
-        cv2.moveWindow('E1', 100,800)
+        if showResults:
+            cv2.imshow('E1', E1Image)
+            cv2.moveWindow('E1', 100,800)
         
         E2Image = current_image[:center[0],:center[1]]
         unique, counts = np.unique(E2Image, return_counts=True)
@@ -155,8 +171,9 @@ class NewGeometric():
         if (1 not in myDict):
             myDict[1] = 0
         E2 = myDict[1]
-        cv2.imshow('E2', E2Image)
-        cv2.moveWindow('E2', 300,800)
+        if showResults:
+            cv2.imshow('E2', E2Image)
+            cv2.moveWindow('E2', 300,800)
 
         E3Image = current_image[ center[0]: , center[1]: ]
         unique, counts = np.unique(E3Image, return_counts=True)
@@ -164,8 +181,9 @@ class NewGeometric():
         if (1 not in myDict):
             myDict[1] = 0
         E3 = myDict[1]
-        cv2.imshow('E3',E3Image)
-        cv2.moveWindow('E3', 500,800)
+        if showResults:
+            cv2.imshow('E3',E3Image)
+            cv2.moveWindow('E3', 500,800)
         
         E4Image = current_image[ center[0]: , :center[1]]
         unique, counts = np.unique(E4Image, return_counts=True)
@@ -173,8 +191,9 @@ class NewGeometric():
         if (1 not in myDict):
             myDict[1] = 0
         E4 = myDict[1]
-        cv2.imshow('E4', E4Image)
-        cv2.moveWindow('E4', 700,800)
+        if showResults:
+            cv2.imshow('E4', E4Image)
+            cv2.moveWindow('E4', 700,800)
 
         features += [E1, E2, E3, E4] #F6, F7, F8, F9
 
@@ -182,8 +201,9 @@ class NewGeometric():
 
         cv2.line(current_image, left, right, (255,255,255), 2)
         cv2.line(current_image, up, down, (255,255,255), 2)
-        cv2.imshow('E1:E4',current_image)
-        cv2.moveWindow('E1:E4', 1300,100)
+        if showResults:
+            cv2.imshow('E1:E4',current_image)
+            cv2.moveWindow('E1:E4', 1300,100)
 
         ################# Bounding Box of Character #################
         # 9) Find the first pixel of 1 in the first row, last column, last row and first column, (x1, y1), (x2, y2), (x3,
@@ -220,13 +240,13 @@ class NewGeometric():
         
         boundingBox = current_image.copy()
         
-        # print('(',x1, y1,')','(', x2, y2,')', '(',x3,y3,')','(',x4, y4,')')
-        cv2.line(current_image, (x1, y1 ), (x2, y2 ), (255,255,255), 2)
-        cv2.line(current_image, (x2, y2 ), (x3, y3 ), (255,255,255), 2)
-        cv2.line(current_image, (x3, y3 ), (x4, y4 ), (255,255,255), 2)
-        cv2.line(current_image, (x4, y4 ), (x1, y1 ), (255,255,255), 2)
-        cv2.imshow('Bounding Box of characters',current_image)
-        cv2.moveWindow('Bounding Box of characters', 1500,100)
+        if showResults:
+            cv2.line(current_image, (x1, y1 ), (x2, y2 ), (255,255,255), 2)
+            cv2.line(current_image, (x2, y2 ), (x3, y3 ), (255,255,255), 2)
+            cv2.line(current_image, (x3, y3 ), (x4, y4 ), (255,255,255), 2)
+            cv2.line(current_image, (x4, y4 ), (x1, y1 ), (255,255,255), 2)
+            cv2.imshow('Bounding Box of characters',current_image)
+            cv2.moveWindow('Bounding Box of characters', 1500,100)
 
         import math
         def lineLength(point1, point2):
@@ -288,12 +308,13 @@ class NewGeometric():
             idx += 1
 
 
-        cv2.imshow('Discrete Horizontal Lines',discreteHorizontalLines)
-        cv2.moveWindow('Discrete Horizontal Lines', 100,400)
+        if showResults:
+            cv2.imshow('Discrete Horizontal Lines',discreteHorizontalLines)
+            cv2.moveWindow('Discrete Horizontal Lines', 100,400)
 
         
-        cv2.imshow('Continous Horizontal Lines',continousHorizontalLines)
-        cv2.moveWindow('Continous Horizontal Lines', 300,400)
+            cv2.imshow('Continous Horizontal Lines',continousHorizontalLines)
+            cv2.moveWindow('Continous Horizontal Lines', 300,400)
 
         # 11) Account the number of lines that do not have zeroes in the middle, and those that have zeroes in its
         # middle.
@@ -320,4 +341,5 @@ if __name__ == "__main__":
     # cv2.waitKey(0)    
 
     newGeo = NewGeometric()
+    print(newGeo.featuresNumber)
     newGeo.getFeatures(gray)

@@ -132,7 +132,7 @@ def CharacterSegmentation(wordImage, lineNumber=0, wordNumber =0):
     
     # Getting the index of the maximum horizontal transitions above the baseline
     if BaselineIndex == 0:
-        return wordImage
+        return gray
         
     maxTransitions = np.amax(HorizontalTransition[:BaselineIndex])
     index = np.where(HorizontalTransition == maxTransitions)
@@ -366,27 +366,38 @@ def CharacterSegmentation(wordImage, lineNumber=0, wordNumber =0):
     # O U T P U T :
     # -------------
 
-    word = cv2.cvtColor(word, cv2.COLOR_GRAY2RGB)
-    wordDots = cv2.cvtColor(wordDots, cv2.COLOR_GRAY2RGB)
-    wordLines = cv2.cvtColor(wordLines, cv2.COLOR_GRAY2RGB)
-    skeletonized *= 255
+    Characters = []	
+    for i in range(len(cutIndices)):     	
+        if(i==len(cutIndices)-1):	
+            character = gray[:,0:cutIndices[i][0]]    	
+        else:	
+            character = gray[:,cutIndices[i+1][0]:cutIndices[i][0]]	
+        Characters.append(character)	
+    return Characters	
 
-    VT = []
-    irange=min(len(startIndices),len(endIndices))
 
-    for i in range(irange):
-        wordDots[MaxTransitionsIndex+(i%2),startIndices[i]]= [255*(i%2), 0,255*((i+1)%2)]
-        wordDots[MaxTransitionsIndex+(i%2),endIndices[i]]= [255*(i%2), 0,255*((i+1)%2)]
-    for c, strock in cutIndices:     
-        cv2.line(wordLines, (c, 0), (c, wordImage.shape[0]), (0,0,255), 1)
-        VT.append(VerticalTransition[c])
+    # word = cv2.cvtColor(word, cv2.COLOR_GRAY2RGB)
+    # wordDots = cv2.cvtColor(wordDots, cv2.COLOR_GRAY2RGB)
+    # wordLines = cv2.cvtColor(wordLines, cv2.COLOR_GRAY2RGB)
+    # skeletonized *= 255
 
-    # To Save output image
-    cv2.imwrite("../PreprocessingOutput/CharacterSegmentation/"+str(lineNumber)+'-'+str(wordNumber)+'-'+"Lines.png",wordLines)
-    cv2.imwrite("../PreprocessingOutput/CharacterSegmentation/"+str(lineNumber)+'-'+str(wordNumber)+'-'+"Dots.png",wordDots)
-    cv2.imwrite("../PreprocessingOutput/CharacterSegmentation/"+str(lineNumber)+'-'+str(wordNumber)+'-'+"skeleton.png",skeletonized)
-    cv2.imwrite("../PreprocessingOutput/CharacterSegmentation/"+str(lineNumber)+'-'+str(wordNumber)+'-'+"original.png",wordImage)
-    pass
+    # VT = []
+    # irange=min(len(startIndices),len(endIndices))
+
+    # for i in range(irange):
+    #     wordDots[MaxTransitionsIndex+(i%2),startIndices[i]]= [255*(i%2), 0,255*((i+1)%2)]
+    #     wordDots[MaxTransitionsIndex+(i%2),endIndices[i]]= [255*(i%2), 0,255*((i+1)%2)]
+    # for c, strock in cutIndices:     
+    #     cv2.line(wordLines, (c, 0), (c, wordImage.shape[0]), (0,0,255), 1)
+    #     VT.append(VerticalTransition[c])
+
+
+    # # To Save output image
+    # cv2.imwrite("../PreprocessingOutput/CharacterSegmentation/"+str(lineNumber)+'-'+str(wordNumber)+'-'+"Lines.png",wordLines)
+    # cv2.imwrite("../PreprocessingOutput/CharacterSegmentation/"+str(lineNumber)+'-'+str(wordNumber)+'-'+"Dots.png",wordDots)
+    # cv2.imwrite("../PreprocessingOutput/CharacterSegmentation/"+str(lineNumber)+'-'+str(wordNumber)+'-'+"skeleton.png",skeletonized)
+    # cv2.imwrite("../PreprocessingOutput/CharacterSegmentation/"+str(lineNumber)+'-'+str(wordNumber)+'-'+"original.png",wordImage)
+    # pass
 
 
 # E N D  O F  C H A R A C T E R  S E G M E N T A T I O N 

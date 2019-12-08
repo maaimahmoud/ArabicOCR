@@ -42,43 +42,45 @@ class Letter(Enum):
     ؤ = [117,118]
     ئ = [119,120,121,122]
 
-terminal_characters = ["ا", "أ", "آ", "إ", "د", "ذ", "ر", "ز", "و", "ة"]
+terminal_characters = ["ا", "أ", "آ", "إ", "د", "ذ", "ر", "ز", "و", "ؤ", "ة", "ء"]
 
 def get_labels(doc):
     labels = []
     i = 0
     for word in doc.split():
         while i < len(word):
-            label = Letter[word[i]].value
-            if word[i] == "ل" and i+1 < len(word) and word[i+1] in ["ا", "أ", "آ"]:   # special case "لا"
-                comb = word[i] + word[i+1]
-                if i == 0 or word[i-1] in terminal_characters:
-                    label = Letter[comb].value[0]
-                else:
-                    label = Letter[comb].value[1]
-                labels.append(label)
-                i += 1
-            elif i == 0:
-                if len(word) == 1 or word[i] in terminal_characters:
-                    labels.append(label[0])
-                else:
-                    labels.append(label[3])
-            elif i == len(word)-1:
-                if word[i-1] in terminal_characters:
-                    labels.append(label[0])
-                else:
-                    labels.append(label[1])
-            else:
-                if word[i-1] in terminal_characters:
-                    if word[i] in terminal_characters:
+            if word[i] in Letter.__members__:
+                #print(word[i])
+                label = Letter[word[i]].value
+                if word[i] == "ل" and i+1 < len(word) and word[i+1] in ["ا", "أ", "آ"]:   # special case "لا"
+                    comb = word[i] + word[i+1]
+                    if i == 0 or word[i-1] in terminal_characters:
+                        label = Letter[comb].value[0]
+                    else:
+                        label = Letter[comb].value[1]
+                    labels.append(label)
+                    i += 1
+                elif i == 0:
+                    if len(word) == 1 or word[i] in terminal_characters:
                         labels.append(label[0])
                     else:
                         labels.append(label[3])
-                else:
-                    if word[i] in terminal_characters:
-                        labels.append(label[1])
+                elif i == len(word)-1:
+                    if word[i-1] in terminal_characters:
+                        labels.append(label[0])
                     else:
-                        labels.append(label[2])
+                        labels.append(label[1])
+                else:
+                    if word[i-1] in terminal_characters:
+                        if word[i] in terminal_characters:
+                            labels.append(label[0])
+                        else:
+                            labels.append(label[3])
+                    else:
+                        if word[i] in terminal_characters:
+                            labels.append(label[1])
+                        else:
+                            labels.append(label[2])
             i += 1
         i = 0
     return labels
@@ -86,6 +88,3 @@ def get_labels(doc):
 if __name__ == "__main__":    
     document = "نحب الصيف والشتاء لأن الجو جميلا"
     print(get_labels(document))
-        
-
-

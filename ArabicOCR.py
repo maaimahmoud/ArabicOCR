@@ -11,6 +11,7 @@ TESTING_DATASET = './Dataset/Testing'
 from importlib import import_module
 import argparse
 from tqdm import tqdm
+import timeit
 import glob
 import cv2
 import numpy as np
@@ -34,6 +35,20 @@ def readImages(folder, trainTest = 0):
             if trainTest == 0:
                 label = int(img_files[i][img_files[i].index("label_") + len("label_"):img_files[i].index("_size")])
                 y_vals.append(label)  
+    return images, y_vals, filesNames
+
+def readImagesInFolder(folder):
+    images = []
+    folders = [f for f in glob.glob(folder + "**/*", recursive=True)]
+    y_vals = []
+    filesNames = []
+    image_count = 0
+    for img in folders:
+        # only read 100 images
+        if image_count == 100:
+            return images, y_vals, filesNames
+        filesNames += [img[img.index("scanned/") + len("scanned/"):]]
+        image_count += 1
     return images, y_vals, filesNames
 
 def imagePreprocessing(img):
@@ -81,18 +96,31 @@ if __name__ == "__main__":
     mode = int(input("1.Train\n2.Test existing Model\n"))
 
     if mode == 1:
-        trainingImages, classifier.y_vals, __ = readImages(TRAINING_DATASET, trainTest = 0)
+        # set start time
+        start_time = timeit.default_timer()
+
+        trainingImages, classifier.y_vals, filesNames = readImagesInFolder(TRAINING_DATASET)
+        #trainingImages, classifier.y_vals, __ = readImages(TRAINING_DATASET, trainTest = 0)
         print('-----------------------------')
         
         print('Feature Extraction Phase')
         if TRAINING_DATASET == './Dataset/scanned':
+            image_count = 0
+            exit_loop = False
             trainingImages = []
             for r, d, f in os.walk(TRAINING_DATASET):
                 for file in f:
                     if '.png' in file:
+                        # only read first 100 images
+                        if image_count == 100 :
+                            exit_loop = True
+                            break
+                        image_count += 1
                         # files.append(os.path.join(r, file))
                         trainingImages += [cv2.imread(TRAINING_DATASET+'/'+file)]
                         # print(TRAINING_DATASET+'/'+file)
+                if exit_loop:
+                    break
 
             # print(len(trainingImages))
             for i in tqdm(range(len(trainingImages))):
@@ -102,7 +130,7 @@ if __name__ == "__main__":
                 
                 # print("Preprocessed")
                 textFileName = filesNames[0][:-4].replace('scanned','text')
-                textFile = open(textFileName+'.txt', encoding='utf-8')
+                textFile = open("text/" + textFileName+'.txt', encoding='utf-8')
                 # # textCharacters = list(textFile.read().replace('\n',''))
                 # print(get_labels(textFile.read().replace('\n','')))
                 classifier.y_vals.append(get_labels(textFile.read().replace('\n','')))
@@ -110,7 +138,7 @@ if __name__ == "__main__":
                 for line in segmented:
                     for word in line:
                         for char in word:
-                            print('Currently processing image '+filesNames[0]+' line #', segmented.index(line), ' word #', line.index(word),' char #', word.index(char))
+                            #print('Currently processing image '+filesNames[0]+' line #', segmented.index(line), ' word #', line.index(word),' char #', word.index(char))
                             currentCharFeature = features.getFeatures(char, False)
                             classifier.x_vals.append(currentCharFeature)
                         # f.write(' ')
@@ -134,6 +162,9 @@ if __name__ == "__main__":
         print('Testing Phase')
         print('-----------------------------')
         classifier.test()
+
+        # Calculate and print total runtime
+        print('Runtime: ', (timeit.default_timer() - start_time)/60) 
 
         # Save Model
         # print('Model Saved as '+'Models/'+args.classifier+'-'+args.features+'.sav')

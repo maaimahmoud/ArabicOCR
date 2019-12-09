@@ -3,8 +3,8 @@
 # featureMethod: StatisticalFeatures - NewGeometricFeatures
 # classifier: SVM
 
-TRAINING_DATASET = './Letters-Dataset-Generator/LettersDataset'
-#TRAINING_DATASET = './Dataset/scanned'
+#TRAINING_DATASET = './Letters-Dataset-Generator/LettersDataset'
+TRAINING_DATASET = './Dataset/scanned'
 TESTING_DATASET = './Dataset/Testing'
 
 
@@ -44,8 +44,8 @@ def readImagesInFolder(folder):
     filesNames = []
     image_count = 0
     for img in folders:
-        # only read 6 images
-        if image_count == 6:
+        # only read first image
+        if image_count == 1:
             return images, y_vals, filesNames
         filesNames += [img[img.index("scanned/") + len("scanned/"):]]
         image_count += 1
@@ -99,8 +99,8 @@ if __name__ == "__main__":
         # set start time
         start_time = timeit.default_timer()
 
-        #trainingImages, classifier.y_vals, filesNames = readImagesInFolder(TRAINING_DATASET)
-        trainingImages, classifier.y_vals, __ = readImages(TRAINING_DATASET, trainTest = 0)
+        trainingImages, classifier.y_vals, filesNames = readImagesInFolder(TRAINING_DATASET)
+        #trainingImages, classifier.y_vals, __ = readImages(TRAINING_DATASET, trainTest = 0)
         print('-----------------------------')
         
         print('Feature Extraction Phase')
@@ -111,8 +111,8 @@ if __name__ == "__main__":
             for r, d, f in os.walk(TRAINING_DATASET):
                 for file in f:
                     if '.png' in file:
-                        # only read first 6 images
-                        if image_count == 6 :
+                        # only read first first image
+                        if image_count == 1 :
                             exit_loop = True
                             break
                         image_count += 1
@@ -145,7 +145,8 @@ if __name__ == "__main__":
                     # f.write('\n')
                 # f.close()
                 filesNames.pop(0)
-
+            # Flatten the 2d labels list
+            classifier.y_vals = sum(classifier.y_vals, [])
         else:
             # Get Features
             for i in tqdm(range(len(trainingImages))):

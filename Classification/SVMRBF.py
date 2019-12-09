@@ -33,7 +33,8 @@ class SVMRBF():
         self.clf = None
 
     def train(self):
-
+        #print(len(self.x_vals), len(self.x_vals[0]))
+        #print(len(self.y_vals))
         self.x_train_vals, self.x_test_vals, self.y_train_vals, self.y_test_vals = train_test_split(self.x_vals, self.y_vals, test_size=0.2, random_state=42)
         scaler = MaxAbsScaler()
         self.x_train_vals = scaler.fit_transform(self.x_train_vals)

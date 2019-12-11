@@ -169,7 +169,7 @@ class SVM():
         self.classifier = pickle.load(open(fileName + '.sav', 'r'))
 
     def getResult(self, x):
-        y_pred = classifier.predict(self.x_vals_test)
+        y_pred = self.classifier.predict(self.x_vals_test)
         return y_pred
         
 # if __name__ == "__main__":    

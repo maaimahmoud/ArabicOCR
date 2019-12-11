@@ -19,7 +19,7 @@ import pickle
 
 class SVMRBF():
 
-    def __init__(self):
+    def __init__(self, featuresNumber):
         super().__init__()
 
         self.x_vals = [] # Features from input images
@@ -43,8 +43,8 @@ class SVMRBF():
         param = [
             {
                 "kernel": ["rbf"],
-                "C": [70, 80, 90],
-                "gamma": [3, 4, 5] 
+                "C": [1,10, 20,100],
+                "gamma": [0.01, 0.4, 1, 10] 
             }
         ]
         # request one-vs-all strategy
@@ -84,7 +84,7 @@ class SVMRBF():
         self.classifier = pickle.load(open(fileName + '.sav', 'r'))
 
     def getResult(self, x):
-        y_pred = classifier.predict(self.x_vals_test)
+        y_pred = self.clf.predict(x)
         return y_pred
         
 # if __name__ == "__main__":    

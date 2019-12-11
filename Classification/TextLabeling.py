@@ -35,65 +35,65 @@ class Letter(Enum):
     لا = [102,103]
     لأ = [104, 105]
     ﻵ = [106,107]
-    ى = [108,109]
-    ي = [110,111,112,113]
-    ة = [114,115]
-    ء = [116]
-    ؤ = [117,118]
-    ئ = [119,120,121,122]
-    INVALID = -1
+    لإ = [108, 109]
+    ى = [110,111]
+    ي = [112,113,114,115]
+    ة = [116,117]
+    ء = [118]
+    ؤ = [119,120]
+    ئ = [121,122,123,124]
+    INVALID = 125
 
 terminal_characters = ["ا", "أ", "آ", "إ", "د", "ذ", "ر", "ز", "و", "ؤ", "ة", "ء"]
 
-def get_labels(doc):
+def get_labels(word):
     labels = []
     invalid_end = False
     i = 0
-    for word in doc.split():
-        if word[-1] not in Letter.__members__:
-            word = word[:-1]
-            invalid_end = True
-        while i < len(word):
-            if word[i] in Letter.__members__:
-                label = Letter[word[i]].value
-                if word[i] == "ل" and i+1 < len(word) and word[i+1] in ["ا", "أ", "آ"]:   # special case "لا"
-                    comb = word[i] + word[i+1]
-                    if i == 0 or word[i-1] in terminal_characters:
-                        label = Letter[comb].value[0]
-                    else:
-                        label = Letter[comb].value[1]
-                    labels.append(label)
-                    i += 1
-                elif i == 0:
-                    if len(word) == 1 or word[i] in terminal_characters:
+    if word[-1] not in Letter.__members__:
+        word = word[:-1]
+        invalid_end = True
+    while i < len(word):
+        if word[i] in Letter.__members__:
+            label = Letter[word[i]].value
+            if word[i] == "ل" and i+1 < len(word) and word[i+1] in ["ا", "أ", "آ", "إ"]:   # special case "لا"
+                comb = word[i] + word[i+1]
+                if i == 0 or word[i-1] in terminal_characters:
+                    label = Letter[comb].value[0]
+                else:
+                    label = Letter[comb].value[1]
+                labels.append(label)
+                i += 1
+            elif i == 0:
+                if len(word) == 1 or word[i] in terminal_characters:
+                    labels.append(label[0])
+                else:
+                    labels.append(label[3])
+            elif i == len(word)-1:
+                if word[i-1] in terminal_characters:
+                    labels.append(label[0])
+                else:
+                    labels.append(label[1])
+            else:
+                if word[i-1] in terminal_characters:
+                    if word[i] in terminal_characters:
                         labels.append(label[0])
                     else:
                         labels.append(label[3])
-                elif i == len(word)-1:
-                    if word[i-1] in terminal_characters:
-                        labels.append(label[0])
-                    else:
-                        labels.append(label[1])
                 else:
-                    if word[i-1] in terminal_characters:
-                        if word[i] in terminal_characters:
-                            labels.append(label[0])
-                        else:
-                            labels.append(label[3])
+                    if word[i] in terminal_characters:
+                        labels.append(label[1])
                     else:
-                        if word[i] in terminal_characters:
-                            labels.append(label[1])
-                        else:
-                            labels.append(label[2])
-            else:
-                labels.append(Letter.INVALID)
-            i += 1
-        i = 0
-        if invalid_end:
-            labels.append(Letter.INVALID)
-            invalid_end = False
+                        labels.append(label[2])
+        else:
+            labels.append(Letter.INVALID.value)
+        i += 1
+    if invalid_end:
+        labels.append(Letter.INVALID.value)
+        invalid_end = False
     return labels
 
 if __name__ == "__main__":    
-    document = "نحب الصيف والشتاء لأن الجو جميلا"
-    print(get_labels(document))
+    #document = "نحب الصيف والشتاء لأن الجو جميلا"
+    #print(get_labels(document))
+    pass

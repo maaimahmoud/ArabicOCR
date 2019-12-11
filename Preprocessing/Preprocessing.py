@@ -18,10 +18,10 @@ def Preprocssing(img):
     # print(words[0,0].shape)
     characters = []
     # Segment words into characters
-    # for i in range(len(words)):
-    #     for j in range(len(words[i])):
-    #             # print(i, j)
-    #             characters += [CharacterSegmentation(cv2.cvtColor(np.array(words[i][j], dtype=np.uint8), cv2.COLOR_GRAY2BGR), lineNumber=i, wordNumber =j)]
+    for i in range(len(words)):
+        for j in range(len(words[i])):
+                # print(i, j)
+                characters += [CharacterSegmentation(np.array(words[i][j], dtype=np.uint8), lineNumber=i, wordNumber = j, saveResults = True)]
 
     return characters, numberOfExtractedWords
 
@@ -32,12 +32,15 @@ if __name__ == "__main__":
     calculatedNumberOfWords = 0
 
     # Read Image    
-    for i in range(6,7):
+    for i in range(2,3):
         img = cv2.imread("../Dataset/scanned/capr"+str(i)+".png")
         text = open("../Dataset/text/capr"+str(i)+".txt",encoding='utf-8')
         # print(text.read())
 
-        original = len(text.read().replace('\n','').split(' '))
+        textWords = text.read().replace('\n','').split(' ')
+        textWords = [item for item in textWords if item != '']
+        
+        original = len(textWords)
         originalNumberOfWords += original
 
         __, calculated = Preprocssing(img)

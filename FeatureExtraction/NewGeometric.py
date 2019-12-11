@@ -7,30 +7,33 @@ class NewGeometric():
     def __init__(self):
         self.featuresNumber = 19
 
-    def getFeatures(self, image, black_background = False, showResults = False):
+    def getFeatures(self, gray, black_background = False, showResults = False):
         features = []
 
         # 1) Convert the input image to a binary image with 0 and 1.
         # cv2.imshow('mai', gray)
         # cv2.waitKey(0)
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        # gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         ################# fill holes #################
         # 2) Remove black holes with values 0 that surround with 1.
-
-        th, im_th = cv2.threshold(gray, 220, 255, cv2.THRESH_BINARY_INV)    
-        # Copy the thresholded image.
-        im_floodfill = im_th.copy()
-        # Mask used to flood filling.
-        # Notice the size needs to be 2 pixels than the image.
-        h, w = im_th.shape[:2]
-        mask = np.zeros((h+2, w+2), np.uint8)
-        # Floodfill from point (0, 0)
-        cv2.floodFill(im_floodfill, mask, (0,0), 255)
-        # Invert floodfilled image
-        im_floodfill_inv = cv2.bitwise_not(im_floodfill)
-        # Combine the two images to get the foreground.
-        im_out = im_th | im_floodfill_inv
-        gray = im_out
+        # gray = gray * 255
+        gray = 1 - gray
+        # th, im_th = cv2.threshold(gray, 220, 255, cv2.THRESH_BINARY_INV)    
+        # # cv2.imshow("current char", im_th)
+        # # cv2.waitKey(0)
+        # # Copy the thresholded image.
+        # im_floodfill = im_th.copy()
+        # # Mask used to flood filling.
+        # # Notice the size needs to be 2 pixels than the image.
+        # h, w = im_th.shape[:2]
+        # mask = np.zeros((h+2, w+2), np.uint8)
+        # # Floodfill from point (0, 0)
+        # cv2.floodFill(im_floodfill, mask, (0,0), 255)
+        # # Invert floodfilled image
+        # im_floodfill_inv = cv2.bitwise_not(im_floodfill)
+        # # Combine the two images to get the foreground.
+        # im_out = im_th | im_floodfill_inv
+        # # gray = im_out
         if showResults:
             cv2.imshow('RemoveHoles',gray)
             cv2.moveWindow('RemoveHoles', 100,100)
@@ -44,8 +47,8 @@ class NewGeometric():
         bounding_box = cv2.findNonZero(gray)
         x, y, w, h = cv2.boundingRect(bounding_box) # Find minimum spanning bounding box
         CHAR_MARGIN = 1
-        cropped = gray[max(0,y-CHAR_MARGIN):min(gray.shape[0], y+h+CHAR_MARGIN), max(0,x-CHAR_MARGIN):min(gray.shape[1],x+w+CHAR_MARGIN)] # 0, 255
-        # I = np.asarray(cropped)
+        # cropped = gray[max(0,y-CHAR_MARGIN):min(gray.shape[0], y+h+CHAR_MARGIN), max(0,x-CHAR_MARGIN):min(gray.shape[1],x+w+CHAR_MARGIN)] # 0, 255
+        cropped = gray
         if showResults:
             cv2.imshow('RemoveSpaces',cropped)
             cv2.moveWindow('RemoveSpaces', 300,100)
@@ -204,6 +207,7 @@ class NewGeometric():
         if showResults:
             cv2.imshow('E1:E4',current_image)
             cv2.moveWindow('E1:E4', 1300,100)
+            cv2.waitKey(0)
 
         ################# Bounding Box of Character #################
         # 9) Find the first pixel of 1 in the first row, last column, last row and first column, (x1, y1), (x2, y2), (x3,
@@ -315,6 +319,7 @@ class NewGeometric():
         
             cv2.imshow('Continous Horizontal Lines',continousHorizontalLines)
             cv2.moveWindow('Continous Horizontal Lines', 300,400)
+            cv2.waitKey(0)
 
         # 11) Account the number of lines that do not have zeroes in the middle, and those that have zeroes in its
         # middle.
@@ -324,22 +329,21 @@ class NewGeometric():
 
         features += [T1, T1pos[0], T1pos[1], T2, T2pos[0], T2pos[1]] #F14, F15, F16, F17, F18, F19
         # print(features)
-        # cv2.waitKey(0)
 
         return features
 
 if __name__ == "__main__":
     
     # Read Image    
-    img = cv2.imread("../Dataset/daal.png")
+    img = cv2.imread("../Dataset/kaaf.png")
 
     # Gray Scale Conversion
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-    cv2.imshow('OriginalImage',gray)
+    cv2.imshow('OriginalImage',img)
     cv2.moveWindow('OriginalImage', 100,100)
     # cv2.waitKey(0)    
 
     newGeo = NewGeometric()
     print(newGeo.featuresNumber)
-    newGeo.getFeatures(gray)
+    newGeo.getFeatures(gray, showResults = True)

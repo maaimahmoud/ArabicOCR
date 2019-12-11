@@ -4,7 +4,7 @@ import cv2
 
 class StatisticalFeatures():
     
-    def ___init___(self):
+    def __init__(self):
         self.featuresNumber = 56
         
     def getFeatures(self, image, black_background):

@@ -68,10 +68,12 @@ def WordSegmentation(img, lineNumber, saveResults=True):
     del filteredGaps[-1]
     i = 1
     for currentGap in reversed(filteredGaps):
-        words += [I[:,currentGap:previousGap]]
-        if saveResults:
-            cv2.imwrite("../PreprocessingOutput/WordSegmentation/"+str(lineNumber)+'-'+str(i)+".png",I[:,currentGap:previousGap])
-            i += 1
+        wordImage = I[:,currentGap:previousGap]
+        if np.sum(wordImage) > 0:
+            words += [wordImage]
+            if saveResults:
+                cv2.imwrite("../PreprocessingOutput/WordSegmentation/"+str(lineNumber)+'-'+str(i)+".png",wordImage)
+                i += 1
         previousGap = currentGap
             
     return words

@@ -87,14 +87,13 @@ def imageAnalysis(imgArr, xstart, xend, ystart, yend):
     return HP, HT, VP, VT, Heights
 
 
-def CharacterSegmentation(wordImage, lineNumber=0, wordNumber =0):
+def CharacterSegmentation(gray, lineNumber = 0, wordNumber = 0, saveResults = False):
 
     # I M A G E  P R E P R O C E S S I N G :
     # ---------------------------------------
 
     ## Gray Scale Conversion
-    gray = cv2.cvtColor(wordImage, cv2.COLOR_BGR2GRAY)
-    
+    # gray = cv2.cvtColor(wordImage, cv2.COLOR_BGR2GRAY)
     # Trimming the non character border parts
     coords = cv2.findNonZero(gray)
     x,y,w,h = cv2.boundingRect(coords)
@@ -131,6 +130,7 @@ def CharacterSegmentation(wordImage, lineNumber=0, wordNumber =0):
     BaselineIndex = index[0][0]
     
     if BaselineIndex == 0:
+        # print(gray.shape)
         return [gray]
 
     # Getting the index of the maximum horizontal transitions above the baseline
@@ -369,9 +369,11 @@ def CharacterSegmentation(wordImage, lineNumber=0, wordNumber =0):
     Characters = []	
     for i in range(len(cutIndices)):     	
         if(i==len(cutIndices)-1):	
-            character = wordImage[:,0:cutIndices[i][0]]    	
+            character = gray[:,0:cutIndices[i][0]]    	
         else:	
-            character = wordImage[:,cutIndices[i+1][0]:cutIndices[i][0]]	
+            character = gray[:,cutIndices[i+1][0]:cutIndices[i][0]]	
+        if saveResults:
+            cv2.imwrite("../PreprocessingOutput/CharacterSegmentation/"+str(lineNumber)+'-'+str(wordNumber)+'-'+str(i)+".png",character)
         Characters.append(character)	
     return Characters	
 

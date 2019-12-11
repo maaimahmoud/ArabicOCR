@@ -21,6 +21,13 @@ from Preprocessing.Words import WordSegmentation
 from Preprocessing.Characters import CharacterSegmentation
 from Classification.TextLabeling import get_labels
 
+import re
+def atoi(text):
+    return int(text) if text.isdigit() else text
+
+def natural_keys(text):
+    return [ atoi(c) for c in re.split(r'(\d+)', text) ]
+
 def readImages(folder, trainTest = 0):
     images = []
     folders = [f for f in glob.glob(folder + "**/*", recursive=True)]
@@ -66,7 +73,7 @@ def imagePreprocessing(img):
     for i in range(len(words)):
         currentLine = []
         for j in range(len(words[i])):
-            currentLine += [CharacterSegmentation(cv2.cvtColor(np.array(words[i][j], dtype=np.uint8), cv2.COLOR_GRAY2BGR), lineNumber=i, wordNumber =j)]
+            currentLine += [CharacterSegmentation(np.array(words[i][j], dtype=np.uint8), lineNumber=i, wordNumber =j)]
         characters += [currentLine]
     return characters # [[[, , , characters], , , words] , , , lines] 
 
@@ -90,7 +97,7 @@ if __name__ == "__main__":
     # Import classifier Type
     classifierModule = import_module('Classification.' + args.classifier) # Dynamically load the classifier module
     classifierClass = getattr(classifierModule, args.classifier)
-    classifier = classifierClass()
+    classifier = classifierClass(features.featuresNumber)
     ###########################
 
     mode = int(input("1.Train\n2.Test existing Model\n"))
@@ -99,61 +106,63 @@ if __name__ == "__main__":
         # set start time
         start_time = timeit.default_timer()
 
-        trainingImages, classifier.y_vals, filesNames = readImagesInFolder(TRAINING_DATASET)
         #trainingImages, classifier.y_vals, __ = readImages(TRAINING_DATASET, trainTest = 0)
-        print('-----------------------------')
         
-        print('Feature Extraction Phase')
         if TRAINING_DATASET == './Dataset/scanned':
-            image_count = 0
-            exit_loop = False
-            trainingImages = []
-            for r, d, f in os.walk(TRAINING_DATASET):
-                for file in f:
-                    if '.png' in file:
-                        # only read first first image
-                        if image_count == 1 :
-                            exit_loop = True
-                            break
-                        image_count += 1
-                        # files.append(os.path.join(r, file))
-                        trainingImages += [cv2.imread(TRAINING_DATASET+'/'+file)]
-                        # print(TRAINING_DATASET+'/'+file)
-                if exit_loop:
-                    break
+            # os.listdir("Dataset/scanned/")
+            print("Reading Dataset")
 
-            # print(len(trainingImages))
+            trainingImages = []
+            imagesNames = []
+
+            for i in tqdm(sorted(glob.glob(TRAINING_DATASET + "*/*.png"),  key=natural_keys)[1:2]):
+                trainingImages += [cv2.imread(i)]
+                imagesNames += [i[:-4]]
+
+            print('-----------------------------')
+            print("Preprocessing and feature Extraction Phase")
+
+            processedCharacters = 0
+            ignoredWords = 0
+            processedWords = 0
+            print("working on ", imagesNames)
             for i in tqdm(range(len(trainingImages))):
                 image = trainingImages[i]
-                # print(image)
+
+                textFileName = imagesNames[i].replace('scanned','text')
+                textWords = open(textFileName+'.txt', encoding='utf-8').read().replace('\n',' ').split(' ')
+
+                textWords = [item for item in textWords if item != '']
+
                 segmented = imagePreprocessing(image) # Get characters of image
                 
-                # print("Preprocessed")
-                textFileName = filesNames[0][:-4].replace('scanned','text')
-                textFile = open("text/" + textFileName+'.txt', encoding='utf-8')
-                # # textCharacters = list(textFile.read().replace('\n',''))
-                # print(get_labels(textFile.read().replace('\n','')))
-                classifier.y_vals.append(get_labels(textFile.read().replace('\n','')))
                 # [[[, , , characters], , , words] , , , lines]
                 for line in segmented:
                     for word in line:
-                        for char in word:
-                            #print('Currently processing image '+filesNames[0]+' line #', segmented.index(line), ' word #', line.index(word),' char #', word.index(char))
-                            currentCharFeature = features.getFeatures(char, False)
-                            classifier.x_vals.append(currentCharFeature)
-                        # f.write(' ')
-                    # f.write('\n')
-                # f.close()
-                filesNames.pop(0)
+
+                        if len(word) == len(textWords[0]): # segmented characters != word characters
+                            classifier.y_vals.extend(get_labels(textWords[0]))
+                            for char in word:
+                                processedCharacters += 1
+                                #print('Currently processing image '+filesNames[0]+' line #', segmented.index(line), ' word #', line.index(word),' char #', word.index(char))
+                                currentCharFeature = features.getFeatures(char, False)
+                                classifier.x_vals.append(currentCharFeature)
+                            processedWords += 1
+                        else:
+                            ignoredWords += 1
+                        textWords.pop(0)
             # Flatten the 2d labels list
-            classifier.y_vals = sum(classifier.y_vals, [])
+            print("processedCharacters = ", processedCharacters, "Characters from text = ", len(classifier.y_vals))
+            print("ignoredWords = ", ignoredWords, " processedWords = ", processedWords)
+            # classifier.y_vals = sum(classifier.y_vals, [])
+            print('-----------------------------')
         else:
+            trainingImages, classifier.y_vals, filesNames = readImagesInFolder(TRAINING_DATASET)
             # Get Features
             for i in tqdm(range(len(trainingImages))):
                 image = trainingImages[i]
                 classifier.x_vals.append(features.getFeatures(image, False))
-        print('-----------------------------')
-
+        
         # Train classifer
         print('Training Phase')
         print('-----------------------------')

@@ -11,47 +11,59 @@ class NewGeometric():
         features = []
 
         # 1) Convert the input image to a binary image with 0 and 1.
-        # cv2.imshow('mai', gray)
-        # cv2.waitKey(0)
-        # gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        if black_background:
+            # gray = 255 - gray
+            pass
+        else:
+            gray = cv2.cvtColor(gray, cv2.COLOR_BGR2GRAY)        
+            th, gray = cv2.threshold(gray,  220, 255, cv2.THRESH_BINARY_INV)
         ################# fill holes #################
         # 2) Remove black holes with values 0 that surround with 1.
-        # gray = gray * 255
-        gray = 1 - gray
-        # th, im_th = cv2.threshold(gray, 220, 255, cv2.THRESH_BINARY_INV)    
-        # # cv2.imshow("current char", im_th)
-        # # cv2.waitKey(0)
-        # # Copy the thresholded image.
-        # im_floodfill = im_th.copy()
-        # # Mask used to flood filling.
-        # # Notice the size needs to be 2 pixels than the image.
-        # h, w = im_th.shape[:2]
-        # mask = np.zeros((h+2, w+2), np.uint8)
-        # # Floodfill from point (0, 0)
-        # cv2.floodFill(im_floodfill, mask, (0,0), 255)
-        # # Invert floodfilled image
-        # im_floodfill_inv = cv2.bitwise_not(im_floodfill)
-        # # Combine the two images to get the foreground.
-        # im_out = im_th | im_floodfill_inv
-        # # gray = im_out
+        
+        h, w = gray.shape[0:2]
+        base_size=h+2,w+2
+        base=np.zeros(base_size,dtype=np.uint8)
+        cv2.rectangle(base,(0,0),(w+2,h+2),(0,0,0),30) # really thick white rectangle
+        # base = cv2.cvtColor(base, cv2.COLOR_BGR2GRAY)
+        base[1:h+1, 1:w+1] = gray # this works
+
+
+        im_th = base
+        # Copy the thresholded image.
+        im_floodfill = im_th.copy()
+        # Mask used to flood filling.
+        # Notice the size needs to be 2 pixels than the image.
+        h, w = im_th.shape[:2]
+        mask = np.zeros((h+2, w+2), np.uint8)
+        # Floodfill from point (0, 0)
+        cv2.floodFill(im_floodfill, mask, (0,0), 255)
+        # Invert floodfilled image
+        im_floodfill_inv = cv2.bitwise_not(im_floodfill)
+        # Combine the two images to get the foreground.
+        im_out = im_th | im_floodfill_inv
+        gray = im_out
         if showResults:
             cv2.imshow('RemoveHoles',gray)
-            cv2.moveWindow('RemoveHoles', 100,100)
-            # cv2.imshow("Thresholded Image", im_th)
-            # cv2.imshow("Floodfilled Image", im_floodfill)
-            # cv2.imshow("Inverted Floodfilled Image", im_floodfill_inv)
-            # cv2.imshow("Foreground", im_out)    
+            cv2.moveWindow('RemoveHoles', 100,100) 
+            # cv2.waitKey(0)
+        #     cv2.imshow("Thresholded Image", im_th)
+        #     cv2.imshow("Floodfilled Image", im_floodfill)
+        #     cv2.imshow("Inverted Floodfilled Image", im_floodfill_inv)
+        #     cv2.imshow("Foreground", im_out)    
+
 
         ################# Remove black spaces #################
-        # gray = 255*(gray < 128).astype(np.uint8) # To invert the text to white
+        # if not black_background:
         bounding_box = cv2.findNonZero(gray)
         x, y, w, h = cv2.boundingRect(bounding_box) # Find minimum spanning bounding box
         CHAR_MARGIN = 1
-        # cropped = gray[max(0,y-CHAR_MARGIN):min(gray.shape[0], y+h+CHAR_MARGIN), max(0,x-CHAR_MARGIN):min(gray.shape[1],x+w+CHAR_MARGIN)] # 0, 255
-        cropped = gray
+        cropped = gray[max(0,y-CHAR_MARGIN):min(gray.shape[0], y+h+CHAR_MARGIN), max(0,x-CHAR_MARGIN):min(gray.shape[1],x+w+CHAR_MARGIN)] # 0, 255
+        # cropped = gray
         if showResults:
             cv2.imshow('RemoveSpaces',cropped)
             cv2.moveWindow('RemoveSpaces', 300,100)
+        # else:
+            # cropped = gray
         ################# Resize Image #################
         # 3) Resize of the input image to 100 x 60 pixels.
         resized = cv2.resize(cropped, (60, 100)) # 7, 11 , 10 ,255, 0
@@ -59,6 +71,7 @@ class NewGeometric():
         if showResults:
             cv2.imshow('ResizeImage',resized)
             cv2.moveWindow('ResizeImage', 500,100)
+            # cv2.waitKey(0)
         ################# Divide to 4 regions #################
         # 4) Find the centre of the resized image (cx, cy).
         current_image = resized.copy()
@@ -207,7 +220,7 @@ class NewGeometric():
         if showResults:
             cv2.imshow('E1:E4',current_image)
             cv2.moveWindow('E1:E4', 1300,100)
-            cv2.waitKey(0)
+            # cv2.waitKey(0)
 
         ################# Bounding Box of Character #################
         # 9) Find the first pixel of 1 in the first row, last column, last row and first column, (x1, y1), (x2, y2), (x3,
@@ -335,15 +348,17 @@ class NewGeometric():
 if __name__ == "__main__":
     
     # Read Image    
-    img = cv2.imread("../Dataset/kaaf.png")
+    img = cv2.imread("../Dataset/feeh.png")
+    ourDataSet = True
 
-    # Gray Scale Conversion
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    if ourDataSet:
+        # Gray Scale Conversion
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     cv2.imshow('OriginalImage',img)
     cv2.moveWindow('OriginalImage', 100,100)
-    # cv2.waitKey(0)    
+    cv2.waitKey(0)    
 
     newGeo = NewGeometric()
-    print(newGeo.featuresNumber)
-    newGeo.getFeatures(gray, showResults = True)
+
+    newGeo.getFeatures(img, showResults = True, black_background = ourDataSet)

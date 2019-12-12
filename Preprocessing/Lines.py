@@ -81,13 +81,16 @@ def LineSegmentation(img, saveResults=True):
     # rotated = cv2.cvtColor(rotated, cv2.COLOR_GRAY2BGR)
 
     # rotated=255-rotated
- 
+
+    th, threshed = cv2.threshold(rotated, 127, 255, cv2.THRESH_BINARY)
+    rotated = threshed
+
     lines = []
 
     for y in range(len(uppers)):
         lines += [rotated[uppers[y]:lowers[y]+1,:]]
-        # if saveResults:
-        cv2.imwrite("../PreprocessingOutput/LineSegmentation/line"+str(y)+".png",rotated[uppers[y]:lowers[y]+1,:])
+        if saveResults:
+            cv2.imwrite("../PreprocessingOutput/LineSegmentation/line"+str(y)+".png",rotated[uppers[y]:lowers[y]+1,:])
     
     # if saveResults:
     #     for y in uppers:

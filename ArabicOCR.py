@@ -28,6 +28,11 @@ def atoi(text):
 def natural_keys(text):
     return [ atoi(c) for c in re.split(r'(\d+)', text) ]
 
+# checking if string contains list element 
+def contains(string, str_list):
+    res = [ele for ele in str_list if(ele in string)] 
+    return bool(res)
+
 def readImages(folder, trainTest = 0):
     images = []
     folders = [f for f in glob.glob(folder + "**/*", recursive=True)]
@@ -52,7 +57,7 @@ def readImagesInFolder(folder):
     image_count = 0
     for img in folders:
         # only read first image
-        if image_count == 1:
+        if image_count == 4:
             return images, y_vals, filesNames
         filesNames += [img[img.index("scanned/") + len("scanned/"):]]
         image_count += 1
@@ -115,7 +120,7 @@ if __name__ == "__main__":
             trainingImages = []
             imagesNames = []
 
-            for i in tqdm(sorted(glob.glob(TRAINING_DATASET + "*/*.png"),  key=natural_keys)[1:2]):
+            for i in tqdm(sorted(glob.glob(TRAINING_DATASET + "*/*.png"),  key=natural_keys)[1:5]):
                 trainingImages += [cv2.imread(i)]
                 imagesNames += [i[:-4]]
 
@@ -125,6 +130,7 @@ if __name__ == "__main__":
             processedCharacters = 0
             ignoredWords = 0
             processedWords = 0
+            segmented = None
             print("working on ", imagesNames)
             for i in tqdm(range(len(trainingImages))):
                 image = trainingImages[i]
@@ -137,10 +143,14 @@ if __name__ == "__main__":
                 segmented = imagePreprocessing(image) # Get characters of image
                 
                 # [[[, , , characters], , , words] , , , lines]
+                double_char_list = ["لأ" ,"لا" ,"لإ" ,"لآ"]
                 for line in segmented:
                     for word in line:
-
-                        if len(word) == len(textWords[0]): # segmented characters != word characters
+                        text_length = len(textWords[0])
+                        # treat "lam-alf" as one character
+                        if contains(textWords[0], double_char_list):
+                            text_length -=1
+                        if len(word) == text_length: # segmented characters != word characters
                             classifier.y_vals.extend(get_labels(textWords[0]))
                             for char in word:
                                 processedCharacters += 1
@@ -151,13 +161,11 @@ if __name__ == "__main__":
                         else:
                             ignoredWords += 1
                         textWords.pop(0)
-            # Flatten the 2d labels list
             print("processedCharacters = ", processedCharacters, "Characters from text = ", len(classifier.y_vals))
             print("ignoredWords = ", ignoredWords, " processedWords = ", processedWords)
-            # classifier.y_vals = sum(classifier.y_vals, [])
             print('-----------------------------')
         else:
-            trainingImages, classifier.y_vals, filesNames = readImagesInFolder(TRAINING_DATASET)
+            trainingImages, classifier.y_vals, filesNames = readImages(TRAINING_DATASET, 0)
             # Get Features
             for i in tqdm(range(len(trainingImages))):
                 image = trainingImages[i]

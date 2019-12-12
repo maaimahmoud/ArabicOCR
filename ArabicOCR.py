@@ -120,9 +120,9 @@ if __name__ == "__main__":
             trainingImages = []
             imagesNames = []
 
-            for i in tqdm(sorted(glob.glob(TRAINING_DATASET + "*/*.png"),  key=natural_keys)[1:5]):
-                trainingImages += [cv2.imread(i)]
-                imagesNames += [i[:-4]]
+            # for i in tqdm(sorted(glob.glob(TRAINING_DATASET + "*/*.png"),  key=natural_keys)):
+            #     trainingImages += [cv2.imread(i)]
+            #     imagesNames += [i[:-4]]
 
             print('-----------------------------')
             print("Preprocessing and feature Extraction Phase")
@@ -131,11 +131,13 @@ if __name__ == "__main__":
             ignoredWords = 0
             processedWords = 0
             segmented = None
-            print("working on ", imagesNames)
-            for i in tqdm(range(len(trainingImages))):
-                image = trainingImages[i]
 
-                textFileName = imagesNames[i].replace('scanned','text')
+            skippedImages = 0
+
+            for i in tqdm(sorted(glob.glob(TRAINING_DATASET + "*/*.png"),  key=natural_keys)[1:2]):
+                image = cv2.imread(i)
+
+                textFileName = i[:-4].replace('scanned','text')
                 textWords = open(textFileName+'.txt', encoding='utf-8').read().replace('\n',' ').split(' ')
 
                 textWords = [item for item in textWords if item != '']
@@ -144,6 +146,14 @@ if __name__ == "__main__":
                 
                 # [[[, , , characters], , , words] , , , lines]
                 double_char_list = ["لأ" ,"لا" ,"لإ" ,"لآ"]
+                segmentedWords = 0
+                for line in segmented:
+                    segmentedWords += len(line)
+
+                if len(textWords) < segmentedWords:
+                    # print("Image #", i, " is segmented wrongly")
+                    skippedImages += 1
+                    continue
                 for line in segmented:
                     for word in line:
                         text_length = len(textWords[0])
@@ -156,13 +166,14 @@ if __name__ == "__main__":
                                 processedCharacters += 1
                                 #print('Currently processing image '+filesNames[0]+' line #', segmented.index(line), ' word #', line.index(word),' char #', word.index(char))
                                 currentCharFeature = features.getFeatures(char, False)
-                                classifier.x_vals.append(currentCharFeature)
+                                classifier.x_vals.append(currentCharFeature) #cv2.resize(char, (100,60))
                             processedWords += 1
                         else:
                             ignoredWords += 1
                         textWords.pop(0)
             print("processedCharacters = ", processedCharacters, "Characters from text = ", len(classifier.y_vals))
             print("ignoredWords = ", ignoredWords, " processedWords = ", processedWords)
+            print("skipped Images = ", skippedImages, " (out of ", len(trainingImages),")")
             print('-----------------------------')
         else:
             trainingImages, classifier.y_vals, filesNames = readImages(TRAINING_DATASET, 0)

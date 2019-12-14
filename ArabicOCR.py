@@ -134,7 +134,7 @@ if __name__ == "__main__":
 
             skippedImages = 0
 
-            for i in tqdm(sorted(glob.glob(TRAINING_DATASET + "*/*.png"),  key=natural_keys)[1:2]):
+            for i in tqdm(sorted(glob.glob(TRAINING_DATASET + "*/*.png"),  key=natural_keys)[1:200]):
                 image = cv2.imread(i)
 
                 textFileName = i[:-4].replace('scanned','text')
@@ -145,7 +145,7 @@ if __name__ == "__main__":
                 segmented = imagePreprocessing(image) # Get characters of image
                 
                 # [[[, , , characters], , , words] , , , lines]
-                double_char_list = ["لأ" ,"لا" ,"لإ" ,"لآ"]
+                double_char = "لا"
                 segmentedWords = 0
                 for line in segmented:
                     segmentedWords += len(line)
@@ -157,9 +157,10 @@ if __name__ == "__main__":
                 for line in segmented:
                     for word in line:
                         text_length = len(textWords[0])
-                        # treat "lam-alf" as one character
-                        if contains(textWords[0], double_char_list):
-                            text_length -=1
+                        # get count of occurances of "lam-alf" in word
+                        occurances_count = textWords[0].count(double_char)
+                        # treat every "lam-alf" as one character
+                        text_length -= occurances_count
                         if len(word) == text_length: # segmented characters != word characters
                             classifier.y_vals.extend(get_labels(textWords[0]))
                             for char in word:

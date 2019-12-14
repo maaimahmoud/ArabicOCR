@@ -23,7 +23,7 @@ class StatisticalFeatures():
         if black_background:
             binary_img = 1-binary_img
         else:
-            inverted_gray = 255-gray
+            gray = 255-gray
         
         black_pixels = 0                                                   # number of black pixels
         B1, B2, B3, B4 = 0, 0, 0, 0                                        # number of black pixels in each quarter
@@ -101,8 +101,8 @@ class StatisticalFeatures():
         features.extend([centerX/width, centerY/height])
 
         # Calculate horizontal and vertical histogram
-        img_row_sum = np.sum(inverted_gray, axis=1).tolist()                                     
-        img_col_sum = np.sum(inverted_gray, axis=0).tolist()                   
+        img_row_sum = np.sum(gray, axis=1).tolist()                                     
+        img_col_sum = np.sum(gray, axis=0).tolist()                   
         img_row_sum[:] = [x / width for x in img_row_sum]                                # normalization
         img_col_sum[:] = [x / height for x in img_col_sum]
 

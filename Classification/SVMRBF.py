@@ -43,8 +43,8 @@ class SVMRBF():
         param = [
             {
                 "kernel": ["rbf"],
-                "C": [1,10, 20,100],
-                "gamma": [0.01, 0.4, 1, 10] 
+                "C": [50, 60, 70],
+                "gamma": [0.2, 0.3, 0.4] 
             }
         ]
         # request one-vs-all strategy

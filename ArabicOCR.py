@@ -70,7 +70,7 @@ def imagePreprocessing(img):
     # Segment lines into words
     words = []
     for i in range(len(lines)):
-        words += [WordSegmentation(lines[i], i, saveResults=False)]
+        words += [WordSegmentation(lines[i], lineNumber = i, saveResults=False)]
 
     #print(len(words), len(words[0]), len(words[1]))
     characters = []
@@ -134,7 +134,7 @@ if __name__ == "__main__":
 
             skippedImages = 0
 
-            for i in tqdm(sorted(glob.glob(TRAINING_DATASET + "*/*.png"),  key=natural_keys)[1:200]):
+            for i in tqdm(sorted(glob.glob(TRAINING_DATASET + "*/*.png"),  key=natural_keys)[0:400]):
                 image = cv2.imread(i)
 
                 textFileName = i[:-4].replace('scanned','text')
@@ -151,7 +151,6 @@ if __name__ == "__main__":
                     segmentedWords += len(line)
 
                 if len(textWords) < segmentedWords:
-                    # print("Image #", i, " is segmented wrongly")
                     skippedImages += 1
                     continue
                 for line in segmented:
@@ -166,7 +165,7 @@ if __name__ == "__main__":
                             for char in word:
                                 processedCharacters += 1
                                 #print('Currently processing image '+filesNames[0]+' line #', segmented.index(line), ' word #', line.index(word),' char #', word.index(char))
-                                currentCharFeature = features.getFeatures(char, False)
+                                currentCharFeature = features.getFeatures(char, showResults = False, black_background=True)
                                 classifier.x_vals.append(currentCharFeature) #cv2.resize(char, (100,60))
                             processedWords += 1
                         else:

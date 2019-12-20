@@ -7,7 +7,7 @@ class StatisticalFeatures():
     def __init__(self):
         self.featuresNumber = 56
         
-    def getFeatures(self, image, black_background):
+    def getFeatures(self, image, show_results = False, black_background=True):
         features = []                                               # features vector
         if len(image.shape) == 3:
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)

@@ -70,16 +70,13 @@ def imagePreprocessing(img):
     # Segment lines into words
     words = []
     for i in range(len(lines)):
-        words += [WordSegmentation(lines[i], lineNumber = i, saveResults=False)]
+        words.extend(WordSegmentation(lines[i], lineNumber = i, saveResults=False))
 
-    #print(len(words), len(words[0]), len(words[1]))
     characters = []
     # Segment words into characters
-    for i in range(len(words)):
-        currentLine = []
-        for j in range(len(words[i])):
-            currentLine += [CharacterSegmentation(np.array(words[i][j], dtype=np.uint8), lineNumber=i, wordNumber =j)]
-        characters += [currentLine]
+    for word in words:
+        characters.append(CharacterSegmentation(np.array(word, dtype=np.uint8)))
+
     return characters # [[[, , , characters], , , words] , , , lines] 
 
 
@@ -133,8 +130,9 @@ if __name__ == "__main__":
             segmented = None
 
             skippedImages = 0
+            TotalImages = 0
 
-            for i in tqdm(sorted(glob.glob(TRAINING_DATASET + "*/*.png"),  key=natural_keys)[0:400]):
+            for i in tqdm(sorted(glob.glob(TRAINING_DATASET + "*/*.png"),  key=natural_keys)[:50]):
                 image = cv2.imread(i)
 
                 textFileName = i[:-4].replace('scanned','text')
@@ -143,37 +141,64 @@ if __name__ == "__main__":
                 textWords = [item for item in textWords if item != '']
 
                 segmented = imagePreprocessing(image) # Get characters of image
+                # print("segmented", textFileName)
                 
                 # [[[, , , characters], , , words] , , , lines]
                 double_char = "لا"
-                segmentedWords = 0
-                for line in segmented:
-                    segmentedWords += len(line)
+                segmentedWords = len(segmented)
 
-                if len(textWords) < segmentedWords:
+                TotalImages += 1
+                # print("Text: ", len(textWords), "Segmented: ", len(segmented))
+                if len(textWords) > segmentedWords:
                     skippedImages += 1
                     continue
-                for line in segmented:
-                    for word in line:
-                        text_length = len(textWords[0])
-                        # get count of occurances of "lam-alf" in word
-                        occurances_count = textWords[0].count(double_char)
-                        # treat every "lam-alf" as one character
-                        text_length -= occurances_count
-                        if len(word) == text_length: # segmented characters != word characters
-                            classifier.y_vals.extend(get_labels(textWords[0]))
-                            for char in word:
-                                processedCharacters += 1
-                                #print('Currently processing image '+filesNames[0]+' line #', segmented.index(line), ' word #', line.index(word),' char #', word.index(char))
-                                currentCharFeature = features.getFeatures(char, showResults = False, black_background=True)
-                                classifier.x_vals.append(currentCharFeature) #cv2.resize(char, (100,60))
+                faultyWordSegmented = False
+                if len(textWords) < segmentedWords:
+                    print("FAULTY IMAGE")
+                    faultyWordSegmented = True
+
+
+                for wordIndex in range(len(segmented)):
+
+                    word = segmented[wordIndex]
+
+                    correspondingTextWord = textWords[0]
+
+                    # get count of occurances of "lam-alf" in word
+                    occurances_count = correspondingTextWord.count(double_char)
+
+                    text_length = len(correspondingTextWord)
+                    
+                    # treat every "lam-alf" as one character
+                    text_length -= occurances_count
+
+                    # print("NOW Processing: ", correspondingTextWord, "text_length = ", text_length, " occurances_count = ", occurances_count, ' len(word) = ', len(word) )
+
+                    if len(word) != text_length: # segmented characters != word characters
+                        if faultyWordSegmented and wordIndex + 1 < len(segmented) and occurances_count > 0 and  text_length == len(word) + len(segmented[wordIndex+1]): 
+                            # There is لا that is causing a problem
+                            correspondingTextWord = correspondingTextWord[:len(word)+1]
+                            print("correspondingTextWord = ", correspondingTextWord)
+                            textWords[0] = textWords[0][len(word)+1:]
                             processedWords += 1
                         else:
                             ignoredWords += 1
-                        textWords.pop(0)
+                            del textWords[0]
+                            continue
+                    else:
+                        processedWords += 1
+                        del textWords[0]
+                        
+                    classifier.y_vals.extend(get_labels(correspondingTextWord))
+                    for char in word:
+                        processedCharacters += 1
+                        #print('Currently processing image '+filesNames[0]+' line #', segmented.index(line), ' word #', line.index(word),' char #', word.index(char))
+                        currentCharFeature = features.getFeatures(char, showResults = False, black_background=True)
+                        classifier.x_vals.append(currentCharFeature) #cv2.resize(char, (100,60))
+
             print("processedCharacters = ", processedCharacters, "Characters from text = ", len(classifier.y_vals))
             print("ignoredWords = ", ignoredWords, " processedWords = ", processedWords)
-            print("skipped Images = ", skippedImages, " (out of ", len(trainingImages),")")
+            print("skipped Images = ", skippedImages, " (out of ", TotalImages,")")
             print('-----------------------------')
         else:
             trainingImages, classifier.y_vals, filesNames = readImages(TRAINING_DATASET, 0)

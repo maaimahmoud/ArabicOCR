@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 
-def WordSegmentation(img, lineNumber, saveResults=True):    
+def WordSegmentation(img, imgName = "", lineNumber = 0, saveResults=True):    
     
     # cv2.imshow('original', img)
     # cv2.waitKey(0)
@@ -17,7 +17,7 @@ def WordSegmentation(img, lineNumber, saveResults=True):
     VerticalProjection = cv2.reduce(img, 0, cv2.REDUCE_AVG).reshape(-1)
 
     # Smoothing Vertical Projection
-    avgFilter = np.array([1/3, 1/3, 1/3])
+    avgFilter = np.array([1/4, 1/4, 1/4, 1/4])
     VerticalProjection = np.convolve(VerticalProjection, avgFilter, 'same')
 
     ####################################
@@ -67,15 +67,22 @@ def WordSegmentation(img, lineNumber, saveResults=True):
     previousGap = I.shape[1]
     del filteredGaps[-1]
     i = 1
+
+    resultImage = np.copy(I)
+    resultImage = cv2.cvtColor(resultImage, cv2.COLOR_GRAY2BGR)
+
     for currentGap in reversed(filteredGaps):
         wordImage = I[:,currentGap:previousGap]
         if np.sum(wordImage) > 0:
             words += [wordImage]
-            if saveResults:
-                cv2.imwrite("../PreprocessingOutput/WordSegmentation/"+str(lineNumber)+'-'+str(i)+".png",wordImage)
-                i += 1
+            # if saveResults:
+            #     cv2.imwrite("../PreprocessingOutput/WordSegmentation/"+imgName+'-'+"line#"+str(lineNumber)+'-word#'+str(i)+".png",wordImage)
+            #     i += 1
         previousGap = currentGap
-            
+        cv2.line(resultImage, (currentGap,0), (previousGap, I.shape[1]), (0,255,0), 1)
+    # if saveResults:
+    #     cv2.imwrite("../PreprocessingOutput/WordSegmentation/"+imgName+'-'+"line#"+str(lineNumber)+".png",resultImage)
+    
     return words
 
 if __name__ == "__main__":

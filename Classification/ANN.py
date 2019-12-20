@@ -26,9 +26,9 @@ class ANN():
     def train(self):
 
         # print(set(self.y_vals))   
-        n_classes = len(set(self.y_vals))
+        # n_classes = len(set(self.y_vals))
         # print("n_classes = ", n_classes)
-        # n_classes = 31
+        n_classes = 102
 
         # Initialising the ANN
         self.classifier = Sequential()
@@ -45,7 +45,7 @@ class ANN():
 
         self.x_train_vals, self.x_test_vals, self.y_train_vals, self.y_test_vals = train_test_split(self.x_vals, self.y_vals, test_size=0.30, random_state=42)
         
-        self.y_train_vals = keras.utils.to_categorical(self.y_train_vals)
+        self.y_train_vals = keras.utils.to_categorical(self.y_train_vals, num_classes=n_classes)
         # self.y_test_vals = keras.utils.to_categorical(self.y_test_vals)
         
         self.x_vals_train = np.array(self.x_train_vals)
@@ -56,7 +56,7 @@ class ANN():
         print("x_vals_train = ", self.x_vals_train.shape, " y_vals_train = ", self.y_vals_train.shape)
 
         # Fitting the ANN to the Training set
-        self.classifier.fit(self.x_vals_train, self.y_vals_train, batch_size = 10, epochs = 100)
+        self.classifier.fit(self.x_vals_train, self.y_vals_train, batch_size = 10, epochs = 50)
 
 
 

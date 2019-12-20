@@ -87,7 +87,7 @@ def imageAnalysis(imgArr, xstart, xend, ystart, yend):
     return HP, HT, VP, VT, Heights
 
 
-def CharacterSegmentation(gray, lineNumber = 0, wordNumber = 0, saveResults = False):
+def CharacterSegmentation(gray, imgName = "", lineNumber = 0, wordNumber = 0, saveResults = False):
 
     # I M A G E  P R E P R O C E S S I N G :
     # ---------------------------------------
@@ -101,6 +101,7 @@ def CharacterSegmentation(gray, lineNumber = 0, wordNumber = 0, saveResults = Fa
 
     wordLines = gray[y:y+h, x:x+w]
     wordDots = gray[y:y+h, x:x+w]
+    gray = gray[y:y+h, x:x+w]
   
     # Binarizing the image
     ret, binarized = cv2.threshold(word,115,255,cv2.THRESH_BINARY)
@@ -348,7 +349,8 @@ def CharacterSegmentation(gray, lineNumber = 0, wordNumber = 0, saveResults = Fa
                     cutIndices.pop(i)
                     cutIndices[i]=(cutIndices[i][0],0)
                 else:
-                    cutIndices.pop(i-1)
+                    if (i != 1):
+                        cutIndices.pop(i-1)
            
             elif(i < len(cutIndices) - 1 and cutIndices[i+1][1]==1):
                 cutIndices.pop(i)
@@ -366,6 +368,7 @@ def CharacterSegmentation(gray, lineNumber = 0, wordNumber = 0, saveResults = Fa
     # O U T P U T :
     # -------------
 
+
     Characters = []	
     for i in range(len(cutIndices)):     	
         if(i==len(cutIndices)-1):	
@@ -373,33 +376,34 @@ def CharacterSegmentation(gray, lineNumber = 0, wordNumber = 0, saveResults = Fa
         else:	
             character = gray[:,cutIndices[i+1][0]:cutIndices[i][0]]	
         if saveResults:
-            cv2.imwrite("../PreprocessingOutput/CharacterSegmentation/"+str(lineNumber)+'-'+str(wordNumber)+'-'+str(i)+".png",character)
+            cv2.imwrite("../PreprocessingOutput/CharacterSegmentation/"+imgName+'line#'+str(lineNumber)+'-'+'word#'+str(wordNumber)+'-'+str(i)+".png",character)
         Characters.append(character)	
+
+    if saveResults:
+
+        word = cv2.cvtColor(word, cv2.COLOR_GRAY2RGB)
+        wordDots = cv2.cvtColor(wordDots, cv2.COLOR_GRAY2RGB)
+        wordLines = cv2.cvtColor(wordLines, cv2.COLOR_GRAY2RGB)
+        # skeletonized *= 255
+
+        VT = []
+        irange=min(len(startIndices),len(endIndices))
+
+        for i in range(irange):
+            wordDots[MaxTransitionsIndex+(i%2),startIndices[i]]= [255*(i%2), 0,255*((i+1)%2)]
+            wordDots[MaxTransitionsIndex+(i%2),endIndices[i]]= [255*(i%2), 0,255*((i+1)%2)]
+        for c, strock in cutIndices:     
+            cv2.line(wordLines, (c, 0), (c, gray.shape[0]), (0,0,255), 1)
+            VT.append(VerticalTransition[c])
+
+        # To Save output image
+        cv2.imwrite("../PreprocessingOutput/CharacterSegmentation/"+imgName+'-line#'+str(lineNumber)+'-'+'word#'+str(wordNumber)+'-'+"Lines.png",wordLines)
+        cv2.imwrite("../PreprocessingOutput/CharacterSegmentation/"+imgName+'-line#'+str(lineNumber)+'-'+'word#'+str(wordNumber)+'-'+"Dots.png",wordDots)
+        # cv2.imwrite("../PreprocessingOutput/CharacterSegmentation/"+str(lineNumber)+'-'+str(wordNumber)+'-'+"skeleton.png",skeletonized)
+        # cv2.imwrite("../PreprocessingOutput/CharacterSegmentation/"+str(lineNumber)+'-'+str(wordNumber)+'-'+"original.png",wordImage)
+
     return Characters	
 
-
-    # word = cv2.cvtColor(word, cv2.COLOR_GRAY2RGB)
-    # wordDots = cv2.cvtColor(wordDots, cv2.COLOR_GRAY2RGB)
-    # wordLines = cv2.cvtColor(wordLines, cv2.COLOR_GRAY2RGB)
-    # skeletonized *= 255
-
-    # VT = []
-    # irange=min(len(startIndices),len(endIndices))
-
-    # for i in range(irange):
-    #     wordDots[MaxTransitionsIndex+(i%2),startIndices[i]]= [255*(i%2), 0,255*((i+1)%2)]
-    #     wordDots[MaxTransitionsIndex+(i%2),endIndices[i]]= [255*(i%2), 0,255*((i+1)%2)]
-    # for c, strock in cutIndices:     
-    #     cv2.line(wordLines, (c, 0), (c, wordImage.shape[0]), (0,0,255), 1)
-    #     VT.append(VerticalTransition[c])
-
-
-    # # To Save output image
-    # cv2.imwrite("../PreprocessingOutput/CharacterSegmentation/"+str(lineNumber)+'-'+str(wordNumber)+'-'+"Lines.png",wordLines)
-    # cv2.imwrite("../PreprocessingOutput/CharacterSegmentation/"+str(lineNumber)+'-'+str(wordNumber)+'-'+"Dots.png",wordDots)
-    # cv2.imwrite("../PreprocessingOutput/CharacterSegmentation/"+str(lineNumber)+'-'+str(wordNumber)+'-'+"skeleton.png",skeletonized)
-    # cv2.imwrite("../PreprocessingOutput/CharacterSegmentation/"+str(lineNumber)+'-'+str(wordNumber)+'-'+"original.png",wordImage)
-    # pass
 
 
 # E N D  O F  C H A R A C T E R  S E G M E N T A T I O N 
@@ -416,8 +420,9 @@ if __name__ == "__main__":
     img = cv2.imread("../PreprocessingOutput/WordSegmentation/"+testCase+".png")
     
     
+    
     # cv2.imshow('original', img)
     # cv2.waitKey(0)
 
-    CharacterSegmentation(img)
+    print(len(CharacterSegmentation(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), saveResults=True)))
       

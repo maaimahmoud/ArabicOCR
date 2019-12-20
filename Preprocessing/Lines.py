@@ -10,7 +10,7 @@ def find_score(arr, angle):
     score = np.sum((hist[1:] - hist[:-1]) ** 2)
     return hist, score
 
-def LineSegmentation(img, saveResults=True):
+def LineSegmentation(img, imgName = "", saveResults=True):
 
     ## (1) Gray Scale Conversion
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -90,7 +90,7 @@ def LineSegmentation(img, saveResults=True):
     for y in range(len(uppers)):
         lines += [rotated[uppers[y]:lowers[y]+1,:]]
         if saveResults:
-            cv2.imwrite("../PreprocessingOutput/LineSegmentation/line"+str(y)+".png",rotated[uppers[y]:lowers[y]+1,:])
+            cv2.imwrite("../PreprocessingOutput/LineSegmentation/"+imgName+'-'+"line #"+str(y+1)+".png",rotated[uppers[y]:lowers[y]+1,:])
     
     # if saveResults:
     #     for y in uppers:
@@ -104,4 +104,4 @@ def LineSegmentation(img, saveResults=True):
     return lines
 if __name__ == "__main__":
     
-    LineSegmentation(cv2.imread("../Dataset/scanned/capr1.png"),True)
+    LineSegmentation(cv2.imread("../Dataset/scanned/caug1200.png"),saveResults = True)

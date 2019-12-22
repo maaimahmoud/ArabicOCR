@@ -30,21 +30,20 @@ class SVMRBF():
         
         self.x_test_vals = []  # features for testing dataset
         self.y_test_vals = []  # testing dataset labels
-        self.clf = None
+        self.scaler = MaxAbsScaler()
 
     def train(self):
         #print(len(self.x_vals), len(self.x_vals[0]))
         #print(len(self.y_vals))
         self.x_train_vals, self.x_test_vals, self.y_train_vals, self.y_test_vals = train_test_split(self.x_vals, self.y_vals, test_size=0.2, random_state=42)
-        scaler = MaxAbsScaler()
-        self.x_train_vals = scaler.fit_transform(self.x_train_vals)
-        self.x_test_vals = scaler.transform(self.x_test_vals)
+        self.x_train_vals = self.scaler.fit_transform(self.x_train_vals)
+        self.x_test_vals = self.scaler.transform(self.x_test_vals)
         # candidate parameters to be evaluated
         param = [
             {
                 "kernel": ["rbf"],
-                "C": [50, 60, 70],
-                "gamma": [0.2, 0.3, 0.4] 
+                "C": [70],
+                "gamma": [0.4] 
             }
         ]
         # request one-vs-all strategy
@@ -76,15 +75,19 @@ class SVMRBF():
     def saveModel(self, fileName):
         # save the model to disk
         # joblib.dump(self.classifier, fileName + '.sav')
-        pickle.dump(self.classifier, open(fileName + '.sav', 'w'))
+        save_data = [self.clf, self.scaler]
+        pickle.dump(save_data, open((fileName + '.sav'), 'wb+'))
 
     def loadModel(self,fileName):
         # load the model from disk
         # self.classifier = joblib.load(fileName + '.sav')
-        self.classifier = pickle.load(open(fileName + '.sav', 'r'))
-
+        load_data = pickle.load(open((fileName + '.sav'), 'rb'))
+        self.clf = load_data[0]
+        self.scaler = load_data[1]
+        
     def getResult(self, x):
-        y_pred = self.clf.predict(x)
+        x_test = self.scaler.transform(x)
+        y_pred = self.clf.predict(x_test)
         return y_pred
         
 # if __name__ == "__main__":    

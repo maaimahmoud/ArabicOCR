@@ -59,7 +59,6 @@ def LineSegmentation(img, imgName = "", saveResults=True):
 
     # best_score = max(scores)
     # best_angle = angles[scores.index(best_score)]
-    
     # # correct skew
     # data = inter.rotate(bin_img, best_angle, reshape=False, order=0, cval = 1)
     # rotatedImage = 255*data
@@ -86,11 +85,18 @@ def LineSegmentation(img, imgName = "", saveResults=True):
     rotated = threshed
 
     lines = []
+    #check we've got the whole page before printing
+    for i in range(len(uppers)):
+        if uppers[i]>=lowers[i]+1:
+            return []
 
     for y in range(len(uppers)):
         lines += [rotated[uppers[y]:lowers[y]+1,:]]
         if saveResults:
-            cv2.imwrite("../PreprocessingOutput/LineSegmentation/"+imgName+'-'+"line #"+str(y+1)+".png",rotated[uppers[y]:lowers[y]+1,:])
+            name="../PreprocessingOutput/LineSegmentation/"+imgName+'-'+"line#"+str(y+1)+".png"
+            print(name)
+            cv2.imwrite(name,rotated[uppers[y]:lowers[y]+1,:])
+    
     
     # if saveResults:
     #     for y in uppers:

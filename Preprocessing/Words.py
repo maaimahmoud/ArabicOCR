@@ -75,14 +75,10 @@ def WordSegmentation(img, imgName = "", lineNumber = 0, saveResults=True):
         wordImage = I[:,currentGap:previousGap]
         if np.sum(wordImage) > 0:
             words += [wordImage]
-            # if saveResults:
-            #     cv2.imwrite("../PreprocessingOutput/WordSegmentation/"+imgName+'-'+"line#"+str(lineNumber)+'-word#'+str(i)+".png",wordImage)
-            #     i += 1
-        previousGap = currentGap
-        cv2.line(resultImage, (currentGap,0), (previousGap, I.shape[1]), (0,255,0), 1)
-    # if saveResults:
-    #     cv2.imwrite("../PreprocessingOutput/WordSegmentation/"+imgName+'-'+"line#"+str(lineNumber)+".png",resultImage)
-    
+            if saveResults:
+                cv2.imwrite("../PreprocessingOutput/WordSegmentation/"+imgName+'-'+"line#"+str(lineNumber)+'-word#'+str(i)+".png",wordImage)
+                i += 1
+        previousGap = currentGap   
     return words
 
 if __name__ == "__main__":

@@ -3,3 +3,4 @@ PreprocessingOutput/
 Letters-Dataset-Generator/LettersDataset
 __pycache__
 .vscode
+my-project-env/

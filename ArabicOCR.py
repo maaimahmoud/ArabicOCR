@@ -132,7 +132,7 @@ if __name__ == "__main__":
             skippedImages = 0
             TotalImages = 0
 
-            for i in tqdm(sorted(glob.glob(TRAINING_DATASET + "*/*.png"),  key=natural_keys)[:5]):
+            for i in tqdm(sorted(glob.glob(TRAINING_DATASET + "*/*.png"),  key=natural_keys)[:2]):
                 image = cv2.imread(i)
 
                 textFileName = i[:-4].replace('scanned','text')
@@ -212,23 +212,23 @@ if __name__ == "__main__":
         print('-----------------------------')
         classifier.train()
         
-        for i in tqdm(sorted(glob.glob(TESTING_DATASET + "*/*.png"))):
-            image = cv2.imread(i)
-            textFileName = i[:-4]+'.txt'#.replace('scanned','text')
-            segmented = imagePreprocessing(image) # Get characters of image
-            print(len(segmented))
-            # [[[, , , characters], , , words] , , , lines]
-            f = open(textFileName,'w') 
-            for word in segmented:
-                for char in word:
-                    currentCharFeature = features.getFeatures(char, False)
-                    classificationResult = classifier.getResult([currentCharFeature])
-                    # char = 'أ'
-                    char = getCharFromLabel(classificationResult)
-                    f.write(char)
-                f.write(' ')
-                # f.write('\n')
-            f.close()
+        # for i in tqdm(sorted(glob.glob(TESTING_DATASET + "*/*.png"))):
+        #     image = cv2.imread(i)
+        #     textFileName = i[:-4]+'.txt'#.replace('scanned','text')
+        #     segmented = imagePreprocessing(image) # Get characters of image
+        #     print(len(segmented))
+        #     # [[[, , , characters], , , words] , , , lines]
+        #     f = open(textFileName,'w') 
+        #     for word in segmented:
+        #         for char in word:
+        #             currentCharFeature = features.getFeatures(char, False)
+        #             classificationResult = classifier.getResult([currentCharFeature])
+        #             # char = 'أ'
+        #             char = getCharFromLabel(classificationResult)
+        #             f.write(char)
+        #         f.write(' ')
+        #         # f.write('\n')
+        #     f.close()
 
         # Test Model
         print('Testing Phase')
@@ -239,15 +239,15 @@ if __name__ == "__main__":
         print('Runtime: ', (timeit.default_timer() - start_time)/60) 
 
         # Save Model
-        print('Model Saved as ' + args.classifier+'-'+args.features+'.sav')
-        classifier.saveModel(args.classifier+'-'+args.features)
+        print('Model Saved as ' +'Models/'+ args.classifier+'-'+args.features+'.sav')
+        classifier.saveModel('Models/'+args.classifier+'-'+args.features)
 
     else:
         # modelFileName = input("Model filename:")
         print('Loading Model')
         print('-----------------------------')
         
-        classifier.loadModel(args.classifier+'-'+args.features)
+        classifier.loadModel('Models/'+args.classifier+'-'+args.features)
 
         print('Load Dataset Phase')
         print('-----------------------------')
@@ -263,15 +263,15 @@ if __name__ == "__main__":
             segmented = imagePreprocessing(image) # Get characters of image
             print(len(segmented))
             # [[[, , , characters], , , words] , , , lines]
-            f = open(textFileName,'w') 
+            f = open(textFileName,'wb+') 
             for word in segmented:
                 for char in word:
                     currentCharFeature = features.getFeatures(char, False)
                     classificationResult = classifier.getResult([currentCharFeature])
                     # char = 'أ'
                     char = getCharFromLabel(classificationResult)
-                    f.write(char)
-                f.write(' ')
+                    f.write(char.encode('utf8'))
+                f.write(' '.encode('utf8'))
                 # f.write('\n')
             f.close()
             # filesNames.pop(0)

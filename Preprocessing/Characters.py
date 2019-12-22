@@ -376,7 +376,7 @@ def CharacterSegmentation(gray, imgName = "", lineNumber = 0, wordNumber = 0, sa
         else:	
             character = gray[:,cutIndices[i+1][0]:cutIndices[i][0]]	
         if saveResults:
-            cv2.imwrite("../PreprocessingOutput/CharacterSegmentation/"+imgName+'line#'+str(lineNumber)+'-'+'word#'+str(wordNumber)+'-'+str(i)+".png",character)
+            cv2.imwrite("../PreprocessingOutput/CharacterSegmentation/"+imgName+'line#'+str(lineNumber)+'-'+'word#'+str(wordNumber)+'-'+str(i)+".png",character)    
         Characters.append(character)	
 
     if saveResults:

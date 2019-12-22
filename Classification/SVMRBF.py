@@ -43,8 +43,8 @@ class SVMRBF():
         param = [
             {
                 "kernel": ["rbf"],
-                "C": [50, 60, 70],
-                "gamma": [0.2, 0.3, 0.4] 
+                "C": [70],
+                "gamma": [0.4] 
             }
         ]
         # request one-vs-all strategy
@@ -76,12 +76,12 @@ class SVMRBF():
     def saveModel(self, fileName):
         # save the model to disk
         # joblib.dump(self.classifier, fileName + '.sav')
-        pickle.dump(self.classifier, open(fileName + '.sav', 'w'))
+        pickle.dump(self.clf, open((fileName + '.sav'), 'wb'))
 
     def loadModel(self,fileName):
         # load the model from disk
         # self.classifier = joblib.load(fileName + '.sav')
-        self.classifier = pickle.load(open(fileName + '.sav', 'r'))
+        self.clf = pickle.load(open((fileName + '.sav'), 'rb'))
 
     def getResult(self, x):
         y_pred = self.clf.predict(x)

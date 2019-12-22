@@ -74,7 +74,14 @@ def get_labels(word):
         i += 1
     return labels
 
+def getCharFromLabel(label):
+    for letter in Letter:
+        if label in letter.value:
+            return letter.name
+    return ' '
+
 if __name__ == "__main__":    
     #document = "الاسلاميون"
-    #print(get_labels(document))
+    #print(get_labels(document)
+    #print(getCharFromLabel(10))
     pass

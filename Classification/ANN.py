@@ -77,7 +77,7 @@ class ANN():
     def saveModel(self, fileName):
         # save the model to disk
         # joblib.dump(self.classifier, fileName + '.sav')
-        pickle.dump(self.classifier, open(fileName + '.sav', 'w'))
+        pickle.dump(self.classifier, open(fileName + '.sav', 'wb+'))
         # saver = tf.train.Saver()
         # sess = tf.Session()
         # sess.run(tf.global_variables_initializer())
@@ -86,14 +86,16 @@ class ANN():
     def loadModel(self,fileName):
         # load the model from disk
         # self.classifier = joblib.load(fileName + '.sav')
-        self.classifier = pickle.load(open(fileName + '.sav', 'r'))
+        self.classifier = pickle.load(open(fileName + '.sav', 'rb'))
         # with tf.Session() as sess:    
         #     saver = tf.train.import_meta_graph('my-model-1000.meta')
         #     saver.restore(sess,tf.train.latest_checkpoint('./'))
         #     print(sess.run('w1:0'))
 
     def getResult(self, x):
-        y_pred = classifier.predict(self.x_vals_test)
+        xVals = np.array(x)
+        y_pred = self.classifier.predict(xVals)     
+        y_pred = np.argmax(y_pred, axis=1)
         return y_pred
         
 # if __name__ == "__main__":    

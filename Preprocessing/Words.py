@@ -86,4 +86,4 @@ def WordSegmentation(img, imgName = "", lineNumber = 0, saveResults=True):
     return words
 
 if __name__ == "__main__":
-    WordSegmentation(cv2.imread('../Dataset/scanned/capr1.png'))
+    WordSegmentation(cv2.cvtColor(cv2.imread('../Dataset/scanned/capr1.png'),cv2.COLOR_BGR2GRAY))

@@ -132,7 +132,7 @@ if __name__ == "__main__":
             skippedImages = 0
             TotalImages = 0
 
-            for i in tqdm(sorted(glob.glob(TRAINING_DATASET + "*/*.png"),  key=natural_keys)[:2]):
+            for i in tqdm(sorted(glob.glob(TRAINING_DATASET + "*/*.png"),  key=natural_keys)[:10]):
                 image = cv2.imread(i)
 
                 textFileName = i[:-4].replace('scanned','text')

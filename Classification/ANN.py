@@ -36,6 +36,8 @@ class ANN():
         # Adding the input layer and the first hidden layer
         self.classifier.add(Dense(units = 6, kernel_initializer = 'uniform', activation = 'relu', input_dim = self.featuresNumber))
 
+        self.classifier.add(Dense(units = 6, kernel_initializer = 'uniform', activation = 'relu'))
+
         # Adding the output layer
         # self.classifier.add(Dense(units = 1, kernel_initializer = 'uniform', activation = 'sigmoid'))
         self.classifier.add(Dense(units = n_classes, kernel_initializer = 'uniform', activation = 'softmax'))

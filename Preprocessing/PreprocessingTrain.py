@@ -9,19 +9,24 @@ from Lines import LineSegmentation
 from Words import WordSegmentation
 from Characters import CharacterSegmentation
 from TextLabeling import get_labels
-
-
-#File paths to work with
-hdf5_dir = "../PreprocessingOutput/"
-lines_file="linesTOTAL.h5"
-words_file="words_1000.h5"
-chars_file="chars_1000.h5"
-labels_file="labels_1000.h5"
+import re
+import glob
+from tqdm import tqdm
 
 def atoi(text):
     return int(text) if text.isdigit() else text
 def natural_keys(text):
     return [ atoi(c) for c in re.split(r'(\d+)', text) ]
+
+#File paths to work with
+hdf5_dir = "../PreprocessingOutput/"
+TRAINING_DATASET = '../Dataset/scanned'
+TRAINING_TEXT='../Dataset/text/'
+
+
+datasetList=list(sorted(glob.glob(TRAINING_DATASET + "*/*.png"),  key=natural_keys)[:])
+maxPortion=len(datasetList)
+
 
 def store_many_hdf5(images,imgName,file):
     
@@ -49,7 +54,7 @@ def read_many_hdf5(file_name,img):
 
 
 
-def get_dataset():
+def get_dataset(chars_file,labels_file):
     cfile= h5py.File(hdf5_dir +chars_file, "r+")
     imgs=[]
     for img in cfile.keys():  
@@ -78,40 +83,24 @@ def get_dataset():
 
 
 
-
-import re
-import glob
-from tqdm import tqdm
-def atoi(text):
-    return int(text) if text.isdigit() else text
-
-def natural_keys(text):
-    return [ atoi(c) for c in re.split(r'(\d+)', text) ]
-
-if __name__ == "__main__":
-
-    mode="char"
+def preprocess(mode,lines_file,words_file="",chars_file="",labels_file="",datasetPortion=maxPortion):
 
     #number of images to try over
-    datasetPortion=10
-    TRAINING_DATASET = '../Dataset/scanned'
-    TRAINING_TEXT='../Dataset/text/'
-    datasetList=list(sorted(glob.glob(TRAINING_DATASET + "*/*.png"),  key=natural_keys)[:])
-    maxPortion=len(datasetList)
-
 
     originalNumberOfWords = 0
     lostNumberOfWords = 0
     wrongSegmented = 0
     correctrlySegmented = 0
-    WORD_SEG='../PreprocessingOutput/LineSegmentation/'
 
     j  = 1
     if mode=="lines": #lost 8 pages 21/12/2019
+        if os.path.exists(hdf5_dir +lines_file):
+            print("file already exists, chaneg name or delete")
+            return
         file = h5py.File(hdf5_dir +lines_file, "w")
         print("starting line seg")
-        for i in datasetList[0:10]:
-            # print(i)
+        for i in datasetList[0:datasetPortion]:
+            print(i[ i.rfind('/') + 1 : -4])
             img = cv2.imread(i)
             lines=[]
             lines = LineSegmentation(img, imgName = i[ i.rfind('/') + 1 : -4] ,saveResults=False)
@@ -123,11 +112,15 @@ if __name__ == "__main__":
         print("Total Wrongly segmented pages (LineSeg) = ",wrongSegmented)
    
     elif mode=="word":
+        if os.path.exists(hdf5_dir +words_file):
+            print("file already exists, chaneg name or delete")
+            return
         wfile= h5py.File(hdf5_dir +words_file, "w")
         lfile = h5py.File(hdf5_dir + lines_file, "r+")
         print("starting word seg")
-        for i in datasetList[0:1000]:
+        for i in datasetList[0:datasetPortion]:
             img=i[ i.rfind('/') + 1 : -4]
+            print(img)
             lines,_= read_many_hdf5(lines_file,img)        
             textWords = open(TRAINING_TEXT+img+'.txt', encoding='utf-8').read().replace('\n',' ').split(' ')
             original = len(textWords)
@@ -147,13 +140,16 @@ if __name__ == "__main__":
         print("Correctly Segmented pages (WordSeg)= ",correctrlySegmented)
         wfile.close()
     elif mode=="char":
+        if os.path.exists(hdf5_dir +chars_file) or os.path.exists(hdf5_dir +labels_file):
+            print("file already exists, chaneg name or delete")
+            return
         wfile= h5py.File(hdf5_dir +words_file, "r+")
         cfile = h5py.File(hdf5_dir + chars_file, "w")
         labelfile= h5py.File(hdf5_dir + labels_file, "w")
         hopefulMoments=0
         dreadful=0
 
-        for i in datasetList[0:1000]:
+        for i in datasetList[0:datasetPortion]:
             img=i[ i.rfind('/') + 1 : -4]
             char_count=0
             text_char_count=0
@@ -199,11 +195,26 @@ if __name__ == "__main__":
         print("Pages that couldn't be saved",dreadful)
         cfile.close()
         labelfile.close()
-    else:
-        img,labels=get_dataset()
-        
+    
 
+if __name__ == "__main__":
 
+    # specify dataset portion to segment over max is default
+    portion=10
+    #specify mode to work with, lines/word/char
+    # to work with words, lines must already exist, to work with char, words must exist
+    mode="char"
+    #specify file names, they will be saved in dir specified above
+    lines_file="lines.h5"
+    word_file="word_10.h5"
+    char_file="chars_101.h5"    
+    labels_file="labels_101.h5" # needs to only be supplied when mode = char
 
+ 
+
+    preprocess(mode,lines_file,word_file,char_file,labels_file,portion)
+
+    ##FUNCTION TO CALL TO RETRIEVE SEGMENTED DATA IN ARRAYS
+    #get_dataset(char_file,labels_file)
 
     

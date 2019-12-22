@@ -14,9 +14,9 @@ from TextLabeling import get_labels
 #File paths to work with
 hdf5_dir = "../PreprocessingOutput/"
 lines_file="linesTOTAL.h5"
-words_file="words_1000.h5"
-chars_file="chars_1000.h5"
-labels_file="labels_1000.h5"
+words_file="words_10.h5"
+chars_file="chars_1.h5"
+labels_file="labels_1.h5"
 
 def atoi(text):
     return int(text) if text.isdigit() else text
@@ -153,7 +153,7 @@ if __name__ == "__main__":
         hopefulMoments=0
         dreadful=0
 
-        for i in datasetList[0:1000]:
+        for i in datasetList[1:5]:
             img=i[ i.rfind('/') + 1 : -4]
             char_count=0
             text_char_count=0

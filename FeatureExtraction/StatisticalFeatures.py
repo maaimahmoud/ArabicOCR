@@ -34,6 +34,10 @@ class StatisticalFeatures():
         vertical_transition_count = 0
         VerticalLastPixel = np.ones(width)
         lastPixel = 1
+
+        img_row_sum = np.zeros(height)                                     
+        img_col_sum = np.zeros(width)  
+
         for row in range(height):
                 for col in range(width):
                     if binary_img[row, col] == 0:
@@ -51,6 +55,9 @@ class StatisticalFeatures():
                         # Determine center of mass (of black ink)
                         cx = cx + col
                         cy = cy + row
+                        # Calculate horizontal and vertical histogram
+                        img_row_sum[row] += 1
+                        img_col_sum[col] += 1
                     if(lastPixel != binary_img[row,col]):
                         horizontal_transition_count += 1
                     lastPixel = binary_img[row,col]
@@ -100,9 +107,7 @@ class StatisticalFeatures():
 
         features.extend([centerX/width, centerY/height])
 
-        # Calculate horizontal and vertical histogram
-        img_row_sum = np.sum(gray, axis=1).tolist()                                     
-        img_col_sum = np.sum(gray, axis=0).tolist()                   
+        # Reduce horizontal and vertical histogram to 20 features each              
         img_row_sum[:] = [x / width for x in img_row_sum]                                # normalization
         img_col_sum[:] = [x / height for x in img_col_sum]
 

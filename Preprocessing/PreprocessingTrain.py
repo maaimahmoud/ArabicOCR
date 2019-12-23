@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
-# sys.path.append('../Classification')
+sys.path.append('../Classification')
 import h5py
 import cv2
 import numpy as np

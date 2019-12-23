@@ -33,20 +33,18 @@ class SVMRBF():
         self.scaler = MaxAbsScaler()
 
     def train(self):
-        #print(len(self.x_vals), len(self.x_vals[0]))
-        #print(len(self.y_vals))
         self.x_train_vals, self.x_test_vals, self.y_train_vals, self.y_test_vals = train_test_split(self.x_vals, self.y_vals, test_size=0.2, random_state=42)
         self.x_train_vals = self.scaler.fit_transform(self.x_train_vals)
         self.x_test_vals = self.scaler.transform(self.x_test_vals)
+
        
         # get best parameters for SVM classifier
-        # cParam , gamma = self.getBestParams()
+        self.classifier = self.getBestParams()
 
-        # request one-vs-all strategy
-        self.classifier = SVC(C = 70, gamma = 0.4, cache_size= 10000, 
-                                decision_function_shape= 'ovr')
+        # self.classifier = SVC(C = 70, gamma = 0.4, cache_size= 10000, 
+        #                         decision_function_shape= 'ovr')
     
-        self.classifier.fit(self.x_train_vals, self.y_train_vals)
+        # self.classifier.fit(self.x_train_vals, self.y_train_vals)
 
     def test(self):
 
@@ -54,7 +52,7 @@ class SVMRBF():
         labels = self.y_train_vals
         labels.extend(self.y_test_vals)
 
-        labels=sorted(list(set(labels)))
+        labels=sorted(list(set(np.array(labels))))
         print("\nConfusion matrix:")
         print("Labels: {0}\n".format(",".join(str(labels))))
         print(confusion_matrix(self.y_test_vals, y_predict, labels=labels))
@@ -100,7 +98,7 @@ class SVMRBF():
     
         print("\nBest parameters set:")
         print(clf.best_params_)
-        return clf.best_params_["C"], clf.best_params_["gamma"]
+        return clf
         
 # if __name__ == "__main__":    
     # images = read_images_in_folder('/home/ahmed/Desktop/LettersDataset')

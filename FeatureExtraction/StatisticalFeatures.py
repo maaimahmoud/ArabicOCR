@@ -34,6 +34,10 @@ class StatisticalFeatures():
         vertical_transition_count = 0
         VerticalLastPixel = np.ones(width)
         lastPixel = 1
+
+        img_row_sum = np.zeros(height)                                     
+        img_col_sum = np.zeros(width)  
+
         for row in range(height):
                 for col in range(width):
                     if binary_img[row, col] == 0:
@@ -49,8 +53,11 @@ class StatisticalFeatures():
                             else:
                                 B4 += 1 
                         # Determine center of mass (of black ink)
-                        cx = cx + col
-                        cy = cy + row
+                        cx += col
+                        cy += row
+                        # Calculate horizontal and vertical histogram
+                        img_row_sum[row] += 1/width
+                        img_col_sum[col] += 1/height
                     if(lastPixel != binary_img[row,col]):
                         horizontal_transition_count += 1
                     lastPixel = binary_img[row,col]
@@ -100,16 +107,15 @@ class StatisticalFeatures():
 
         features.extend([centerX/width, centerY/height])
 
-        # Calculate horizontal and vertical histogram
-        img_row_sum = np.sum(gray, axis=1).tolist()                                     
-        img_col_sum = np.sum(gray, axis=0).tolist()                   
-        img_row_sum[:] = [x / width for x in img_row_sum]                                # normalization
-        img_col_sum[:] = [x / height for x in img_col_sum]
+        # Reduce horizontal and vertical histogram to 5 features each 
+        chunks_count = 20
+        # row_chunks = min(height, chunks_count)    
+        # col_chunks = min(width, chunks_count)             
+        
+        img_row_sum_split = np.array_split(img_row_sum, chunks_count)                              # split into 5 chunks
+        img_col_sum_split = np.array_split(img_col_sum, chunks_count)
 
-        img_row_sum_split = np.array_split(img_row_sum, 20)                              # split into 20 chunks
-        img_col_sum_split = np.array_split(img_col_sum, 20)
-
-        # append the average of the 20 chunks to feature vector (for horizontal and vertical)
+        # append the average of the chunks to feature vector (for horizontal and vertical)
         for chunk in img_col_sum_split:                                                  
             if chunk.size != 0:
                 features.append(np.average(chunk))
@@ -120,10 +126,17 @@ class StatisticalFeatures():
                 features.append(np.average(chunk))
             else:
                 features.append(0)
+
+        # features.extend(np.average(img_row_sum_split, axis=1))
+        # features.extend(np.average(img_col_sum_split, axis=1))
+
+        # for _ in range((chunks_count-row_chunks) + (chunks_count-col_chunks)):
+        #     features.append(0)
+
         return features
     pass
 
-if __name__ == "__main__":    
+if _name_ == "_main_":    
     statFeatures = StatisticalFeatures()
 
     img = cv2.imread("../Dataset/waaw.png")

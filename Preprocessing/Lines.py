@@ -4,11 +4,7 @@ import cv2
 import numpy as np
 from scipy.ndimage import interpolation as inter
 
-def find_score(arr, angle):
-    data = inter.rotate(arr, angle, reshape=False, order=0)
-    hist = np.sum(data, axis=1)
-    score = np.sum((hist[1:] - hist[:-1]) ** 2)
-    return hist, score
+
 
 def LineSegmentation(img, imgName = "", saveResults=True):
 
@@ -24,9 +20,7 @@ def LineSegmentation(img, imgName = "", saveResults=True):
     ret = cv2.minAreaRect(pts)
     box = cv2.boxPoints(ret) # cv2.boxPoints(rect) for OpenCV 3.x
     box = np.int0(box)
-    # cv2.drawContours(threshed,[box],0,(255,255,255),2)
-
-    # print(ret)
+  
     (cx,cy), (h,w), ang = ret
 
     
@@ -44,31 +38,7 @@ def LineSegmentation(img, imgName = "", saveResults=True):
     pts = cv2.findNonZero(rotated)
     ret = cv2.minAreaRect(pts)
     
-    # ################## Method 2 ##################
-    # skewImage = threshed
-    # ht, wd = skewImage.shape
-    # bin_img = 1 - (threshed.reshape((ht, wd)) / 255.0)
-
-    # delta = 1
-    # limit = 5
-    # angles = np.arange(-limit, limit+delta, delta)
-    # scores = []
-    # for angle in angles:
-    #     hist, score = find_score(bin_img, angle)
-    #     scores.append(score)
-
-    # best_score = max(scores)
-    # best_angle = angles[scores.index(best_score)]
-    # # correct skew
-    # data = inter.rotate(bin_img, best_angle, reshape=False, order=0, cval = 1)
-    # rotatedImage = 255*data
-    # rotated = 255 - rotatedImage
-    
-    # cv2.imshow('original',threshed)
-    # cv2.imshow('rotated',rotated)
-    # cv2.waitKey(0)    
-    ##################################    
-    
+   
     ## (5) find and draw the upper and lower boundary of each lines
     hist = cv2.reduce(rotated,1, cv2.REDUCE_AVG).reshape(-1)
     # print(hist)
@@ -76,10 +46,6 @@ def LineSegmentation(img, imgName = "", saveResults=True):
     uppers = [y for y in range(H-1) if (y-4>0 and hist[y]==0 and hist[y-1]==0 and hist[y-2]==0 and hist[y-3]==0 and hist[y-4]==0 and hist[y+1]>0)]
     lowers = [y for y in range(H-1) if (y+4<H-1 and hist[y]>0 and hist[y+1]==0 and hist[y+2]==0 and hist[y+3]==0 and hist[y+4]==0)]
 
-    
-    # rotated = cv2.cvtColor(rotated, cv2.COLOR_GRAY2BGR)
-
-    # rotated=255-rotated
 
     th, threshed = cv2.threshold(rotated, 127, 255, cv2.THRESH_BINARY)
     rotated = threshed
@@ -97,15 +63,6 @@ def LineSegmentation(img, imgName = "", saveResults=True):
             print(name)
             cv2.imwrite(name,rotated[uppers[y]:lowers[y]+1,:])
     
-    
-    # if saveResults:
-    #     for y in uppers:
-    #         cv2.line(rotated, (0,y), (W, y), (255,0,0), 1)
-
-    #     for y in lowers:
-    #         cv2.line(rotated, (0,y), (W, y), (0,255,0), 1)
-
-    #     cv2.imwrite("result.png", rotated)
 
     return lines
 if __name__ == "__main__":

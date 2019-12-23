@@ -18,7 +18,7 @@ import numpy as np
 import os
 from Preprocessing.Lines import LineSegmentation
 from Preprocessing.Words import WordSegmentation
-from Preprocessing.Characters import CharacterSegmentation
+from Preprocessing.CharactersR import CharacterSegmentation
 from Classification.TextLabeling import get_labels, getCharFromLabel
 
 import re
@@ -66,17 +66,15 @@ def readImagesInFolder(folder):
 def imagePreprocessing(img):
     # Segment paragraph into lines    
     lines = LineSegmentation(img, saveResults=False)
-
     # Segment lines into words
     words = []
     for i in range(len(lines)):
         words.extend(WordSegmentation(lines[i], lineNumber = i, saveResults=False))
-
     characters = []
     # Segment words into characters
     for word in words:
         characters.append(CharacterSegmentation(np.array(word, dtype=np.uint8)))
-
+    print("lines= ",len(lines)," words= ",len(words)," chars= ",len(characters))
     return characters # [[[, , , characters], , , words] , , , lines] 
 
 

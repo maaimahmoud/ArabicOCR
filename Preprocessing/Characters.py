@@ -1,5 +1,7 @@
 import cv2
 import numpy as np
+import glob
+import re
 # import sys
 # from os import listdir
 # from os.path import isfile, join
@@ -264,9 +266,9 @@ def CharacterSegmentation(gray, imgName = "", lineNumber = 0, wordNumber = 0, sa
         #--------------------------------
 
         # Segment Analysis
-        HPa = np.add.reduce(imArr[0:BaselineIndex,cutIndices[-2][0]:cut+1], axis = 1)
-        HPb = np.add.reduce(imArr[BaselineIndex:,cutIndices[-2][0]:cut+1], axis = 1)
-    
+        HPa = np.add.reduce(imArr[0:BaselineIndex,cut+1:cutIndices[-2][0]], axis = 1)
+        HPb = np.add.reduce(imArr[BaselineIndex+3:imArr.shape[0],cut+1:cutIndices[-2][0]], axis = 1)
+        VT_SK_c = np.count_nonzero(np.diff(imArr_SK[:,cut:cutIndices[-2][0]], axis=0), axis=0)
         HPasum = np.sum(HPa[0:int(BaselineIndex/3)])
         HPbsum = np.sum(HPb) 
 
@@ -274,24 +276,27 @@ def CharacterSegmentation(gray, imgName = "", lineNumber = 0, wordNumber = 0, sa
         nonzeros = list(filter(lambda a: a != 0, HPa.astype('uint8')))
         if(len(nonzeros)==0): #Check stroke removed during skeletonizing
             nonzeros.append(1)
-            HPasum += 1
+            # HPasum += 1
         MFHP = np.bincount(nonzeros).argmax()
 
         # Height of the stroke
         height = max(Height[cut:cutIndices[-2][0]])
-
+        
         # Stroke Detector
-        if(HPasum == 0 and HPbsum == 0 and height <= 6 and abs(MFHP - MFV) < 3 and (np.count_nonzero(VT > 2) < 3) and abs(VP_SK[cut] - MFV) < 2 and VT_SK[cut] == 2):
+        if(HPasum == 0 and HPbsum == 0 and height <= 6 and abs(MFHP - MFV) < 3 and (np.count_nonzero(VT_SK_c > 2) < 3) and abs(VP_SK[cut] - MFV) < 2 and VT_SK[cut] == 2):
             currentStroke = 1
             cutIndices[-1] = (cut, 1)
 
-
-
-
     # S T R O K E   F I L T R A T I O N 
     #----------------------------------
+    wordDots = cv2.cvtColor(wordDots, cv2.COLOR_GRAY2RGB)
+    wordLines = cv2.cvtColor(wordLines, cv2.COLOR_GRAY2RGB)
 
     
+    for c, stroke in cutIndices:     
+        cv2.line(wordLines, (c, 0), (c, gray.shape[0]), (0,255,0), 1)
+    
+    # print(cutIndices)
     i = 0
     c=0
     while(i<len(cutIndices)):
@@ -334,39 +339,27 @@ def CharacterSegmentation(gray, imgName = "", lineNumber = 0, wordNumber = 0, sa
             character = gray[:,0:cutIndices[i][0]]    	
         else:	
             character = gray[:,cutIndices[i+1][0]:cutIndices[i][0]]	
-        # if saveResults:
-            # cv2.imwrite("../PreprocessingOutput/CharacterSegmentation/"+imgName+'line#'+str(lineNumber)+'-'+'word#'+str(wordNumber)+'-'+str(i)+".png",character)
+        if saveResults:
+            cv2.imwrite("../PreprocessingOutput/CharacterSegmentation/"+imgName+'line#'+str(lineNumber)+'-'+'word#'+str(wordNumber)+'-'+str(i)+".png",character)
         Characters.append(character)	
 
 
     # COMMENTED FOR TIME OPTIMIZATION
     # --------------------------------
     
-    # if saveResults:
+    if saveResults:
 
-    #     word = cv2.cvtColor(word, cv2.COLOR_GRAY2RGB)
         # wordDots = cv2.cvtColor(wordDots, cv2.COLOR_GRAY2RGB)
         # wordLines = cv2.cvtColor(wordLines, cv2.COLOR_GRAY2RGB)
-    #     # skeletonized *= 255
 
-    #     VT = []
-    #     irange=min(len(startIndices),len(endIndices))
+        for i in range(irange):
+            wordDots[MaxTransitionsIndex+(i%2),startIndices[i]]= [255*(i%2), 0,255*((i+1)%2)]
+            wordDots[MaxTransitionsIndex+(i%2),endIndices[i]]= [255*(i%2), 0,255*((i+1)%2)]
+        for c, stroke in cutIndices:     
+            cv2.line(wordLines, (c, 0), (c, gray.shape[0]), (0,0,255), 1)
 
-
-
-        # for i in range(irange):
-        #     wordDots[MaxTransitionsIndex+(i%2),startIndices[i]]= [255*(i%2), 0,255*((i+1)%2)]
-        #     wordDots[MaxTransitionsIndex+(i%2),endIndices[i]]= [255*(i%2), 0,255*((i+1)%2)]
-        # for c, stroke in cutIndices:     
-        #     cv2.line(wordLines, (c, 0), (c, gray.shape[0]), (0,0,255), 1)
-
-        # To Save output image
-        # cv2.imwrite("../PreprocessingOutput/CharacterSegmentation/"+imgName+'-line#'+str(lineNumber)+'-'+'word#'+str(wordNumber)+'-'+"Lines.png",wordLines)
-        # cv2.imwrite("../PreprocessingOutput/CharacterSegmentation/"+imgName+'-line#'+str(lineNumber)+'-'+'word#'+str(wordNumber)+'-'+"Dots.png",wordDots)
-        # cv2.imwrite("../PreprocessingOutput/CharacterSegmentation/"+str(lineNumber)+'-'+str(wordNumber)+'-'+"skeleton.png",skeletonized)
-        # cv2.imwrite("../PreprocessingOutput/CharacterSegmentation/"+str(lineNumber)+'-'+str(wordNumber)+'-'+"original.png",wordImage)
-        # cv2.imwrite("original.png",wordLines)
-        # cv2.imwrite("dots.png",wordDots)
+        cv2.imwrite("../PreprocessingOutput/CharacterSegmentation/"+imgName+'line#'+str(lineNumber)+'-'+'word#'+str(wordNumber)+'-'+str(i)+'wodLines.png',wordLines)
+        cv2.imwrite("dots.png",wordDots)
 
     # -----------------------------------
 
@@ -381,22 +374,36 @@ def CharacterSegmentation(gray, imgName = "", lineNumber = 0, wordNumber = 0, sa
 # M A I N :
 # ---------
 
+def atoi(text):
+    return int(text) if text.isdigit() else text
+
+def natural_keys(text):
+    return [atoi(c) for c in re.split(r'(\d+)',text)]
+
 if __name__ == "__main__":
    
-    # img = cv2.imread("7.png")
-    images = []
-    for i in range(10):
-        img = cv2.imread("imgs/"+str(i+1)+".png")
-        images.append(img)
-    i=0
-    start_time = time.time()
-    while(i<1):
-        for wordim in images:
-            CharacterSegmentation(cv2.cvtColor(wordim, cv2.COLOR_BGR2GRAY), saveResults=True)
-        i+=1
-    # CharacterSegmentation(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), saveResults=True)
-    end_time = time.time()
-    print(end_time-start_time)
+    # path = "WordSegmentation"
+    # images = []
+    # for s in sorted(glob.glob(path+"*/*.jpg"), key=natural_keys):
+    #     img = cv2.imread(s)
+    #     images.append(img)
+
+    
+    # start_time = time.time()
+    # for im in images:
+    #     i=0
+    #     c= CharacterSegmentation(cv2.cvtColor(im, cv2.COLOR_BGR2GRAY), saveResults=True)
+    #     for a in c:
+    #         cv2.imwrite(str(i)+".png",a)
+    #         i+=1
+    #     print(i)
+    #     cv2.imshow("s", a)
+    #     cv2.waitKey(0)
+    # end_time = time.time()
+    # print(end_time-start_time)
 
 
-      
+
+    img= cv2.imread("../Dataset/scanned/capr2.png")
+    # print(img)
+    CharacterSegmentation(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), saveResults=True)

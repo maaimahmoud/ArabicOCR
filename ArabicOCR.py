@@ -132,7 +132,7 @@ if __name__ == "__main__":
             skippedImages = 0
             TotalImages = 0
 
-            for i in tqdm(sorted(glob.glob(TRAINING_DATASET + "*/*.png"),  key=natural_keys)[:2]):
+            for i in tqdm(sorted(glob.glob(TRAINING_DATASET + "*/*.png"),  key=natural_keys)[:50]):
                 image = cv2.imread(i)
 
                 textFileName = i[:-4].replace('scanned','text')
@@ -257,21 +257,28 @@ if __name__ == "__main__":
         print('Processing')
         print('-----------------------------')
 
+        # create output directory
+        directory = "./output/text/"
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
+        runtime_file = open("./output/running_time.txt",'w+')
+        # read test images and print corresponding text
         for i in tqdm(sorted(glob.glob(TESTING_DATASET + "*/*.png"))):
             image = cv2.imread(i)
-            textFileName = i[:-4]+'.txt'#.replace('scanned','text')
+            start_time = timeit.default_timer()     # start timer
+            textFileName = os.path.basename(i)[:-4]+'.txt'#.replace('scanned','text')
             segmented = imagePreprocessing(image) # Get characters of image
-            print(len(segmented))
             # [[[, , , characters], , , words] , , , lines]
-            f = open(textFileName,'wb+') 
+            f = open(directory + textFileName,'wb+') 
             for word in segmented:
                 for char in word:
                     currentCharFeature = features.getFeatures(char, False)
                     classificationResult = classifier.getResult([currentCharFeature])
-                    # char = 'أ'
                     char = getCharFromLabel(classificationResult)
                     f.write(char.encode('utf8'))
                 f.write(' '.encode('utf8'))
-                # f.write('\n')
+            runtime_file.write(str(timeit.default_timer() - start_time) + '\n')  # write running time to file
             f.close()
             # filesNames.pop(0)
+        runtime_file.close()

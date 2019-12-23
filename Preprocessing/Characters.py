@@ -1,10 +1,13 @@
 import cv2
 import numpy as np
-import sys
-from os import listdir
-from os.path import isfile, join
+import glob
+import re
+# import sys
+# from os import listdir
+# from os.path import isfile, join
 import time
  
+    
 def neighbours(x, y, image):
     i = image
     x1, y1, x_1, y_1 = x+1, y-1, x-1, y+1
@@ -45,46 +48,36 @@ def skeletonize(image):
     return image
     
 
-def imageAnalysis(imgArr, xstart, xend, ystart, yend):
+def imageAnalysis(wordimg,skeletonizedimg):
 
-    # X higher value is at right
-    xportion = xstart - xend
-    
-    # Y higher value is at down 
-    yportion = ystart - yend
-    
+    imgArr = np.asarray(wordimg) 
+
+    imgArr_SK = np.asarray(skeletonizedimg)
+
     HP = np.zeros(imgArr.shape[0], dtype=int)
     HT = np.zeros(imgArr.shape[0], dtype=int)
     VP = np.zeros(imgArr.shape[1], dtype=int)
     VT = np.zeros(imgArr.shape[1], dtype=int)
-    VLP = np.zeros(imgArr.shape[1], dtype=int)
-    Heights = np.zeros(imgArr.shape[1], dtype=int)
-    Heights[:] = -1
-    LP = 0
-    for row in range(yend, ystart):
-        for col in range(xend, xstart):
-            
-            # Height Calculation
-            if(Heights[col] == -1 and imgArr[row, col] == 1):
-                Heights[col] = row
 
-            #Horizontal Projection
-            HP[row] += imgArr[row, col]
-            
-            #Vertical Projection
-            VP[col] += imgArr[row, col]
-            
-            #Horizontal Transition
-            if(LP != imgArr[row,col]):
-                HT[row] += 1
-            LP = imgArr[row,col]
+    HP_sk = np.zeros(imgArr_SK.shape[0], dtype=int)
+    HT_sk = np.zeros(imgArr_SK.shape[0], dtype=int)
+    VP_sk = np.zeros(imgArr_SK.shape[1], dtype=int)
+    VT_sk = np.zeros(imgArr_SK.shape[1], dtype=int)
 
-            #Vertical Transition
-            if(VLP[col] != imgArr[row,col]):
-                VT[col] += 1
-            VLP[col] = imgArr[row,col]
-    
-    return HP, HT, VP, VT, Heights
+
+    HP = np.add.reduce(imgArr, axis = 1)
+    HT = np.count_nonzero(np.diff(imgArr, axis=1), axis=1)     
+    VP = np.add.reduce(imgArr, axis = 0)
+    VT = np.count_nonzero(np.diff(imgArr, axis=0), axis=0)
+
+    HP_sk = np.add.reduce(imgArr_SK, axis = 1)
+    HT_sk = np.count_nonzero(np.diff(imgArr_SK, axis=1), axis=1)     
+    VP_sk = np.add.reduce(imgArr_SK, axis = 0)
+    VT_sk = np.count_nonzero(np.diff(imgArr_SK, axis=0), axis=0)
+
+    Heights = np.where((imgArr!=0).any(axis=0), (imgArr!=0).argmax(axis=0), -1)
+
+    return HP, HT, VP, VT, HP_sk , HT_sk , VP_sk , VT_sk , Heights
 
 
 def CharacterSegmentation(gray, imgName = "", lineNumber = 0, wordNumber = 0, saveResults = False):
@@ -92,8 +85,6 @@ def CharacterSegmentation(gray, imgName = "", lineNumber = 0, wordNumber = 0, sa
     # I M A G E  P R E P R O C E S S I N G :
     # ---------------------------------------
 
-    ## Gray Scale Conversion
-    # gray = cv2.cvtColor(wordImage, cv2.COLOR_BGR2GRAY)
     # Trimming the non character border parts
     coords = cv2.findNonZero(gray)
     x,y,w,h = cv2.boundingRect(coords)
@@ -109,34 +100,29 @@ def CharacterSegmentation(gray, imgName = "", lineNumber = 0, wordNumber = 0, sa
 
     # Convert to numpy array
     temp = np.asarray(binarized) 
-    I = np.copy(temp)
-    nonSkeleton = np.copy(temp)
+    imArr = np.copy(temp)
 
-
+    skeletonized = skeletonize(np.copy(binarized))
+    imArr_SK = np.asarray(skeletonized)
+    
     # -------------------------------------------------------------------------------------------------
     # I M A G E  S T A T I S T I C S :
     # --------------------------------
   
     # Calculating som statistics about the word 
-    HorizontalProjection, HorizontalTransition, VerticalProjection, VerticalTransition, Height = imageAnalysis(I, I.shape[1], 0, I.shape[0], 0)
-    
-    # Getting the most frequent value in the vetical projection lists i.e. the baseline width
-    nonzeros = list(filter(lambda a: a != 0, VerticalProjection.astype('uint8')))
-    MFV = np.bincount(nonzeros).argmax()
-    
-    
+    HP, HT, VP, VT, HP_SK, HT_SK, VP_SK, VT_SK, Height = imageAnalysis(binarized,skeletonized)
+
     # Getting the baseline index
-    maxElement = np.amax(HorizontalProjection)
-    index = np.where(HorizontalProjection == maxElement)
+    maxElement = np.amax(HP)
+    index = np.where(HP == maxElement)
     BaselineIndex = index[0][0]
     
     if BaselineIndex == 0:
-        # print(gray.shape)
         return [gray]
 
     # Getting the index of the maximum horizontal transitions above the baseline
-    maxTransitions = np.amax(HorizontalTransition[:BaselineIndex])
-    index = np.where(HorizontalTransition == maxTransitions)
+    maxTransitions = np.amax(HT[:BaselineIndex])
+    index = np.where(HT == maxTransitions)
     MaxTransitionsIndex = index[0][0]
     if(BaselineIndex - MaxTransitionsIndex > 3):
         MaxTransitionsIndex = BaselineIndex - 3
@@ -151,17 +137,13 @@ def CharacterSegmentation(gray, imgName = "", lineNumber = 0, wordNumber = 0, sa
     # -------------------------------------
     
     # Locating te start and end indices of each separation region
-    startIndices = []
-    endIndices = []
-    lastPixel = 0   
-
-    for col in reversed(range(I.shape[1])):
-        if(lastPixel == 1 and I[MaxTransitionsIndex,col] == 0):
-            startIndices.append(col +1)
-        elif(lastPixel == 0 and I[MaxTransitionsIndex,col] == 1):
-            endIndices.append(col)
-        lastPixel = I[MaxTransitionsIndex,col]
-
+    TransitionRow = np.copy(imArr[MaxTransitionsIndex])
+    startIndices = np.where(TransitionRow[:-1] - TransitionRow[1:] == -1)[0] + 1
+    startIndices = np.flip(startIndices)
+    startIndices = startIndices.tolist()
+    endIndices = np.where(TransitionRow[:-1] - TransitionRow[1:] == 1)[0].tolist()
+    endIndices = np.flip(endIndices)
+    endIndices = endIndices.tolist()
 
     if( len(startIndices) >0 and  len(endIndices)>0 ):
         if(startIndices[0] - 2 < endIndices[0]):
@@ -170,31 +152,19 @@ def CharacterSegmentation(gray, imgName = "", lineNumber = 0, wordNumber = 0, sa
         if(endIndices[-1] > startIndices[-1] - 2):    
             startIndices.pop(-1)
 
+
     # -------------------------------------------------------------------------------------------------
     # C U T   I N D I C E S :
     # -----------------------
 
-    # Skeletonizing the image
-    ret, binarized = cv2.threshold(word,115,255,cv2.THRESH_BINARY)
-    binarized = binarized/255
-    skeletonized = skeletonize(binarized)
-
-    # Convert to numpy array
-    temp = np.asarray(skeletonized) 
-    I = np.copy(temp)
-
-    # Getting some skeltonized statistics
-    HorizontalProjection, HorizontalTransition, VerticalProjection, VerticalTransition, dummy = imageAnalysis(I, I.shape[1], 0, I.shape[0], 0)
-
     MFV = 1
-
 
     # Identifying the cut index for each separation region
 
     # V A R I A B L E S
     #------------------
 
-    cutIndices = [(I.shape[1]-1,0)]
+    cutIndices = [(imArr.shape[1]-1,0)]
     Strokes = np.zeros(len(startIndices) + 2)
     currentStroke = 0
     previousStroke = 0
@@ -220,16 +190,13 @@ def CharacterSegmentation(gray, imgName = "", lineNumber = 0, wordNumber = 0, sa
         found = 0    
         currentStroke = 0
 
-        HPa, HTa, VPa, VTa, q = imageAnalysis(nonSkeleton, start, end+1, BaselineIndex, 0) 
-        HPb, HTb, VPb, VTb, q = imageAnalysis(nonSkeleton, start, end+1, I.shape[0], BaselineIndex) 
         
-        HPasum = 0 
-        for hpa in HPa: 
-            HPasum += hpa
-            
-        HPbsum = 0
-        for hpb in HPb:
-            HPbsum += hpb
+        HPa = np.add.reduce(imArr[0:BaselineIndex,end+1:start], axis = 1)
+        HPb = np.add.reduce(imArr[BaselineIndex:,end+1:start], axis = 1)
+        
+        HPasum = int(np.sum(HPa))
+        HPbsum = int(np.sum(HPb)) 
+
 
 
         # C U T  I D E N T I F I C A T I O N
@@ -237,7 +204,7 @@ def CharacterSegmentation(gray, imgName = "", lineNumber = 0, wordNumber = 0, sa
 
         # Cut at Subwords in the same word, Remove cuts at false strokes
         for col in reversed(range(end+1, start)):
-            if(VerticalProjection[col] == 0):
+            if(VP_SK[col] == 0):
                 found = 1
                 cut = col
         if(found == 1):
@@ -259,28 +226,27 @@ def CharacterSegmentation(gray, imgName = "", lineNumber = 0, wordNumber = 0, sa
         if(2*Height[end-1] < Heighest and 2*Height[end] < Heighest and 2*Height[end+1] < Heighest):
             miniStroke = 1          
 
-
         # Cut at Baseline only 
-        if(abs(VerticalProjection[cut] - MFV)<2 and VerticalTransition[cut] == 2):
+        if(abs(VP_SK[cut] - MFV)<2 and VT_SK[cut] == 2):
             found = 1
 
 
         # Searching for Baseline only inside the separation region
-        if(found == 0 and VerticalTransition[cut] > 2):
+        if(found == 0 and VT_SK[cut] > 2):
             for col in reversed(range(end+1,cut)):
-                if((VerticalProjection[cut] - MFV)<2 and VerticalTransition[col] == 2):
+                if((VP_SK[cut] - MFV)<2 and VT_SK[col] == 2):
                     cut = col
                     found = 1
                     break
             if(found == 0):
                 for col in range(cut+1,start):
-                    if((VerticalProjection[cut] - MFV)<2 and VerticalTransition[col] == 2):
+                    if((VP_SK[cut] - MFV)<2 and VT_SK[col] == 2):
                         cut = col
                         found = 1
                         break
 
         # Adding the cut index unless it's a hole letter
-        if(abs(VerticalProjection[cut] - MFV) < 2 and VerticalTransition[cut] == 2):
+        if(abs(VP_SK[cut] - MFV) < 2 and VT_SK[cut] == 2):
             cutIndices.append((cut,0))
         else:
             miniStroke = 0
@@ -300,39 +266,37 @@ def CharacterSegmentation(gray, imgName = "", lineNumber = 0, wordNumber = 0, sa
         #--------------------------------
 
         # Segment Analysis
-        HPa, HTa, q, q, q = imageAnalysis(nonSkeleton, cutIndices[-2][0], cut+1, BaselineIndex, 0)
-        HPb, HTb, q, q, q = imageAnalysis(nonSkeleton, cutIndices[-2][0], cut+1, I.shape[0], BaselineIndex + 3)
-        q, q, VP, VT, q = imageAnalysis(I, cutIndices[-2][0], cut, I.shape[0], 0) 
-        HPasum = 0 
-        for hpa in HPa[0:int(BaselineIndex/3)]:
-            HPasum += hpa
-            
-        HPbsum = 0
-        for hpb in HPb:
-            HPbsum += hpb
+        HPa = np.add.reduce(imArr[0:BaselineIndex,cut+1:cutIndices[-2][0]], axis = 1)
+        HPb = np.add.reduce(imArr[BaselineIndex+3:imArr.shape[0],cut+1:cutIndices[-2][0]], axis = 1)
+        VT_SK_c = np.count_nonzero(np.diff(imArr_SK[:,cut:cutIndices[-2][0]], axis=0), axis=0)
+        HPasum = np.sum(HPa[0:int(BaselineIndex/3)])
+        HPbsum = np.sum(HPb) 
 
         # Width of Stroke
         nonzeros = list(filter(lambda a: a != 0, HPa.astype('uint8')))
         if(len(nonzeros)==0): #Check stroke removed during skeletonizing
             nonzeros.append(1)
-            HPasum += 1
+            # HPasum += 1
         MFHP = np.bincount(nonzeros).argmax()
 
-        # Height of he stroke
+        # Height of the stroke
         height = max(Height[cut:cutIndices[-2][0]])
-
+        
         # Stroke Detector
-        if(HPasum == 0 and HPbsum == 0 and height <= 6 and abs(MFHP - MFV) < 3 and (np.count_nonzero(VT > 2) < 3) and abs(VerticalProjection[cut] - MFV) < 2 and VerticalTransition[cut] == 2):
+        if(HPasum == 0 and HPbsum == 0 and height <= 6 and abs(MFHP - MFV) < 3 and (np.count_nonzero(VT_SK_c > 2) < 3) and abs(VP_SK[cut] - MFV) < 2 and VT_SK[cut] == 2):
             currentStroke = 1
             cutIndices[-1] = (cut, 1)
 
-
-
-
     # S T R O K E   F I L T R A T I O N 
     #----------------------------------
+    wordDots = cv2.cvtColor(wordDots, cv2.COLOR_GRAY2RGB)
+    wordLines = cv2.cvtColor(wordLines, cv2.COLOR_GRAY2RGB)
 
     
+    for c, stroke in cutIndices:     
+        cv2.line(wordLines, (c, 0), (c, gray.shape[0]), (0,255,0), 1)
+    
+    # print(cutIndices)
     i = 0
     c=0
     while(i<len(cutIndices)):
@@ -376,34 +340,30 @@ def CharacterSegmentation(gray, imgName = "", lineNumber = 0, wordNumber = 0, sa
         else:	
             character = gray[:,cutIndices[i+1][0]:cutIndices[i][0]]	
         if saveResults:
-            cv2.imwrite("../PreprocessingOutput/CharacterSegmentation/"+imgName+'line#'+str(lineNumber)+'-'+'word#'+str(wordNumber)+'-'+str(i)+".png",character)    
+            cv2.imwrite("../PreprocessingOutput/CharacterSegmentation/"+imgName+'line#'+str(lineNumber)+'-'+'word#'+str(wordNumber)+'-'+str(i)+".png",character)
         Characters.append(character)	
 
+
+    # COMMENTED FOR TIME OPTIMIZATION
+    # --------------------------------
+    
     if saveResults:
 
-        word = cv2.cvtColor(word, cv2.COLOR_GRAY2RGB)
-        wordDots = cv2.cvtColor(wordDots, cv2.COLOR_GRAY2RGB)
-        wordLines = cv2.cvtColor(wordLines, cv2.COLOR_GRAY2RGB)
-        # skeletonized *= 255
-
-        VT = []
-        irange=min(len(startIndices),len(endIndices))
+        # wordDots = cv2.cvtColor(wordDots, cv2.COLOR_GRAY2RGB)
+        # wordLines = cv2.cvtColor(wordLines, cv2.COLOR_GRAY2RGB)
 
         for i in range(irange):
             wordDots[MaxTransitionsIndex+(i%2),startIndices[i]]= [255*(i%2), 0,255*((i+1)%2)]
             wordDots[MaxTransitionsIndex+(i%2),endIndices[i]]= [255*(i%2), 0,255*((i+1)%2)]
-        for c, strock in cutIndices:     
+        for c, stroke in cutIndices:     
             cv2.line(wordLines, (c, 0), (c, gray.shape[0]), (0,0,255), 1)
-            VT.append(VerticalTransition[c])
 
-        # To Save output image
-        cv2.imwrite("../PreprocessingOutput/CharacterSegmentation/"+imgName+'-line#'+str(lineNumber)+'-'+'word#'+str(wordNumber)+'-'+"Lines.png",wordLines)
-        cv2.imwrite("../PreprocessingOutput/CharacterSegmentation/"+imgName+'-line#'+str(lineNumber)+'-'+'word#'+str(wordNumber)+'-'+"Dots.png",wordDots)
-        # cv2.imwrite("../PreprocessingOutput/CharacterSegmentation/"+str(lineNumber)+'-'+str(wordNumber)+'-'+"skeleton.png",skeletonized)
-        # cv2.imwrite("../PreprocessingOutput/CharacterSegmentation/"+str(lineNumber)+'-'+str(wordNumber)+'-'+"original.png",wordImage)
+        cv2.imwrite("../PreprocessingOutput/CharacterSegmentation/"+imgName+'line#'+str(lineNumber)+'-'+'word#'+str(wordNumber)+'-'+str(i)+'wodLines.png',wordLines)
+        cv2.imwrite("dots.png",wordDots)
+
+    # -----------------------------------
 
     return Characters	
-
 
 
 # E N D  O F  C H A R A C T E R  S E G M E N T A T I O N 
@@ -414,15 +374,36 @@ def CharacterSegmentation(gray, imgName = "", lineNumber = 0, wordNumber = 0, sa
 # M A I N :
 # ---------
 
+def atoi(text):
+    return int(text) if text.isdigit() else text
+
+def natural_keys(text):
+    return [atoi(c) for c in re.split(r'(\d+)',text)]
+
 if __name__ == "__main__":
    
-    testCase = sys.argv[1]
-    img = cv2.imread("../PreprocessingOutput/WordSegmentation/"+testCase+".png")
-    
-    
-    
-    # cv2.imshow('original', img)
-    # cv2.waitKey(0)
+    # path = "WordSegmentation"
+    # images = []
+    # for s in sorted(glob.glob(path+"*/*.jpg"), key=natural_keys):
+    #     img = cv2.imread(s)
+    #     images.append(img)
 
-    print(len(CharacterSegmentation(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), saveResults=True)))
-      
+    
+    # start_time = time.time()
+    # for im in images:
+    #     i=0
+    #     c= CharacterSegmentation(cv2.cvtColor(im, cv2.COLOR_BGR2GRAY), saveResults=True)
+    #     for a in c:
+    #         cv2.imwrite(str(i)+".png",a)
+    #         i+=1
+    #     print(i)
+    #     cv2.imshow("s", a)
+    #     cv2.waitKey(0)
+    # end_time = time.time()
+    # print(end_time-start_time)
+
+
+
+    img= cv2.imread("../Dataset/scanned/capr2.png")
+    # print(img)
+    CharacterSegmentation(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), saveResults=True)

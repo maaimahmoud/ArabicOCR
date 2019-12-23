@@ -3,8 +3,8 @@
 # featureMethod: StatisticalFeatures - NewGeometricFeatures
 # classifier: SVM
 
-TRAINING_DATASET = './Letters-Dataset-Generator/LettersDataset'
-# TRAINING_DATASET = './Dataset/scanned'
+# TRAINING_DATASET = './Letters-Dataset-Generator/LettersDataset'
+TRAINING_DATASET = './Dataset/scanned'
 TESTING_DATASET = './Dataset/Testing'
 
 
@@ -23,6 +23,7 @@ from Classification.TextLabeling import get_labels, getCharFromLabel
 # from Preprocessing.PreprocessingTrain import get_dataset
 
 import h5py
+from multiprocessing import Process
 hdf5_dir = "PreprocessingOutput/1000-2000/"
 def get_dataset(chars_file, labels_file):
     cfile = h5py.File(hdf5_dir + chars_file, "r+")
@@ -108,25 +109,106 @@ def imagePreprocessing(img):
 
     return characters # [[[, , , characters], , , words] , , , lines] 
 
+def loop(i):
+    pictureFeatures = []
+    pictureLabels = []
+    actualCharacters = []
+
+    image = cv2.imread(i)
+
+    textFileName = i[:-4].replace('scanned', 'text')
+    textWords = open(textFileName + '.txt', encoding='utf-8').read().replace('\n', ' ').split(' ')
+
+    textWords = [item for item in textWords if item != '']
+
+    segmented = imagePreprocessing(image)  # Get characters of image
+    # print("segmented", textFileName)
+
+    # [[[, , , characters], , , words] , , , lines]
+    double_char = "لا"
+    segmentedWords = len(segmented)
+
+    # TotalImages += 1
+    # print("Text: ", len(textWords), "Segmented: ", len(segmented))
+    if len(textWords) != segmentedWords:
+        # skippedImages += 1
+        return
+    # faultyWordSegmented = False
+    # if len(textWords) < segmentedWords:
+    #     print("FAULTY IMAGE")
+    #     faultyWordSegmented = True
+
+    for wordIndex in range(len(segmented)):
+
+        word = segmented[wordIndex]
+
+        correspondingTextWord = textWords[0]
+
+        # get count of occurances of "lam-alf" in word
+        occurances_count = correspondingTextWord.count(double_char)
+
+        text_length = len(correspondingTextWord)
+
+        # treat every "lam-alf" as one character
+        text_length -= occurances_count
+
+        # print("NOW Processing: ", correspondingTextWord, "text_length = ", text_length, " occurances_count = ", occurances_count, ' len(word) = ', len(word) )
+
+        if len(word) != text_length:  # segmented characters != word characters
+            # if faultyWordSegmented and wordIndex + 1 < len(segmented) and occurances_count > 0 and  text_length == len(word) + len(segmented[wordIndex+1]):
+            #     # There is لا that is causing a problem
+            #     correspondingTextWord = correspondingTextWord[:len(word)+1]
+            #     print("correspondingTextWord = ", correspondingTextWord)
+            #     textWords[0] = textWords[0][len(word)+1:]
+            #     processedWords += 1
+            # else:
+            # ignoredWords += 1
+            del textWords[0]
+            continue
+        # else:
+        #     processedWords += 1
+        #     del textWords[0]
+
+        pictureLabels.extend(get_labels(correspondingTextWord))
+        actualCharacters += [correspondingTextWord]
+        for char in word:
+            # processedCharacters += 1
+            # print('Currently processing image '+filesNames[0]+' line #', segmented.index(line), ' word #', line.index(word),' char #', word.index(char))
+            currentCharFeature = features.getFeatures(char, showResults=False, black_background=True)
+            pictureFeatures.append(currentCharFeature)  # cv2.resize(char, (100,60))
+        del textWords[0]
+    f = open('textFiles/'+i[i.rfind('\\')+1:-4]+'-words.txt','wb+')
+    for myWord in actualCharacters:
+        f.write(myWord.encode('utf8')+'\n'.encode('utf8'))
+    f.close()
+
+    f = open('textFiles/'+i[i.rfind('\\')+1:-4]+'.txt','w+')
+    for k in range(len(pictureFeatures)):
+        f.write(str(pictureLabels[k])+' ')
+        for current_feature in pictureFeatures[k]:
+            f.write("%s " % current_feature)
+
+        f.write('\n')
+    f.close()
+# Read arguments in order
+parser = argparse.ArgumentParser("Train Module")
+parser.add_argument("features")
+parser.add_argument("classifier")
+args = parser.parse_args() # Parse the arguments written by the user in the commandline
+
+# Import Modules
+#################
+
+# Import Features Type
+featuresModule = import_module('FeatureExtraction.' + args.features) # Dynamically load the features module
+featuresClass = getattr(featuresModule, args.features)
+features = featuresClass()
 
 
 if __name__ == "__main__":
-    # Read arguments in order
-    parser = argparse.ArgumentParser("Train Module")
-    parser.add_argument("features")
-    parser.add_argument("classifier")
-    args = parser.parse_args() # Parse the arguments written by the user in the commandline
-
-    # Import Modules
-    #################
-
-    # Import Features Type
-    featuresModule = import_module('FeatureExtraction.' + args.features) # Dynamically load the features module
-    featuresClass = getattr(featuresModule, args.features)
-    features = featuresClass()
 
     # Import classifier Type
-    classifierModule = import_module('Classification.' + args.classifier) # Dynamically load the classifier module
+    classifierModule = import_module('Classification.' + args.classifier)  # Dynamically load the classifier module
     classifierClass = getattr(classifierModule, args.classifier)
     classifier = classifierClass(features.featuresNumber)
     ###########################
@@ -161,73 +243,25 @@ if __name__ == "__main__":
             skippedImages = 0
             TotalImages = 0
 
-            for i in tqdm(sorted(glob.glob(TRAINING_DATASET + "*/*.png"),  key=natural_keys)[:2]):
-                image = cv2.imread(i)
+            processes = []
+            start_time = timeit.default_timer()
+            dataset = sorted(glob.glob(TRAINING_DATASET + "*/*.png"),  key=natural_keys)[:5]
 
-                textFileName = i[:-4].replace('scanned','text')
-                textWords = open(textFileName+'.txt', encoding='utf-8').read().replace('\n',' ').split(' ')
+            for i in list(dataset):
+                p = Process(target=loop, args=(i,))
+                p.start()
+                processes += [p]
 
-                textWords = [item for item in textWords if item != '']
+            for p in processes:
+                p.join()
 
-                segmented = imagePreprocessing(image) # Get characters of image
-                # print("segmented", textFileName)
-                
-                # [[[, , , characters], , , words] , , , lines]
-                double_char = "لا"
-                segmentedWords = len(segmented)
-
-                TotalImages += 1
-                # print("Text: ", len(textWords), "Segmented: ", len(segmented))
-                if len(textWords) > segmentedWords:
-                    skippedImages += 1
-                    continue
-                faultyWordSegmented = False
-                if len(textWords) < segmentedWords:
-                    print("FAULTY IMAGE")
-                    faultyWordSegmented = True
-
-
-                for wordIndex in range(len(segmented)):
-
-                    word = segmented[wordIndex]
-
-                    correspondingTextWord = textWords[0]
-
-                    # get count of occurances of "lam-alf" in word
-                    occurances_count = correspondingTextWord.count(double_char)
-
-                    text_length = len(correspondingTextWord)
-                    
-                    # treat every "lam-alf" as one character
-                    text_length -= occurances_count
-
-                    # print("NOW Processing: ", correspondingTextWord, "text_length = ", text_length, " occurances_count = ", occurances_count, ' len(word) = ', len(word) )
-
-                    if len(word) != text_length: # segmented characters != word characters
-                        if faultyWordSegmented and wordIndex + 1 < len(segmented) and occurances_count > 0 and  text_length == len(word) + len(segmented[wordIndex+1]): 
-                            # There is لا that is causing a problem
-                            correspondingTextWord = correspondingTextWord[:len(word)+1]
-                            print("correspondingTextWord = ", correspondingTextWord)
-                            textWords[0] = textWords[0][len(word)+1:]
-                            processedWords += 1
-                        else:
-                            ignoredWords += 1
-                            del textWords[0]
-                            continue
-                    else:
-                        processedWords += 1
-                        del textWords[0]
-                        
-                    classifier.y_vals.extend(get_labels(correspondingTextWord))
-                    for char in word:
-                        processedCharacters += 1
-                        #print('Currently processing image '+filesNames[0]+' line #', segmented.index(line), ' word #', line.index(word),' char #', word.index(char))
-                        currentCharFeature = features.getFeatures(char, showResults = False, black_background=True)
-                        classifier.x_vals.append(currentCharFeature) #cv2.resize(char, (100,60))
-            
-            print("processedCharacters = ", processedCharacters, "Characters from text = ", len(classifier.y_vals))
-            print("ignoredWords = ", ignoredWords, " processedWords = ", processedWords)
-            print("skipped Images = ", skippedImages, " (out of ", TotalImages,")")
+            print("running time = ", timeit.default_timer() - start_time)
+            print('Finished All#########################################')
+            import time
+            time.sleep(10)
+            # print("processedCharacters = ", processedCharacters, "Characters from text = ", len(classifier.y_vals))
+            # print("ignoredWords = ", ignoredWords, " processedWords = ", processedWords)
+            # print("skipped Images = ", skippedImages, " (out of ", TotalImages,")")
             print('-----------------------------')
         else:
             # trainingImages, classifier.y_vals, filesNames = readImages(TRAINING_DATASET, 0)
@@ -239,8 +273,8 @@ if __name__ == "__main__":
             for i in range(len(trainingImages)):
                 print(i)
                 for j in range(len(trainingImages[i])):
-                    for k in range(len(trainingImages[i][j])):
-                        if (len(trainingImages[i][j][k]) == len(labels[i][j][k])):
+                    if (len(trainingImages[i][j]) == len(labels[i][j])):
+                        for k in range(len(trainingImages[i][j])):
                             image = np.array(trainingImages[i][j][k])
                             classifier.x_vals.append(features.getFeatures(image, False))
                             classifier.y_vals.append(labels[i][j][k])

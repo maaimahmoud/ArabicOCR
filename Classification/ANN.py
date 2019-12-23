@@ -36,8 +36,6 @@ class ANN():
         # Adding the input layer and the first hidden layer
         self.classifier.add(Dense(units = 6, kernel_initializer = 'uniform', activation = 'relu', input_dim = self.featuresNumber))
 
-        self.classifier.add(Dense(units = 6, kernel_initializer = 'uniform', activation = 'relu'))
-
         # Adding the output layer
         # self.classifier.add(Dense(units = 1, kernel_initializer = 'uniform', activation = 'sigmoid'))
         self.classifier.add(Dense(units = n_classes, kernel_initializer = 'uniform', activation = 'softmax'))
@@ -45,7 +43,7 @@ class ANN():
         # Compiling the ANN
         self.classifier.compile(optimizer = 'adam', loss = 'categorical_crossentropy', metrics = ['accuracy'])
 
-        self.x_train_vals, self.x_test_vals, self.y_train_vals, self.y_test_vals = train_test_split(self.x_vals, self.y_vals, test_size=0.10, random_state=42)
+        self.x_train_vals, self.x_test_vals, self.y_train_vals, self.y_test_vals = train_test_split(self.x_vals, self.y_vals, test_size=0.30, random_state=42)
         
         self.y_train_vals = keras.utils.to_categorical(self.y_train_vals, num_classes=n_classes)
         # self.y_test_vals = keras.utils.to_categorical(self.y_test_vals)

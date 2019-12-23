@@ -38,19 +38,29 @@ class SVMRBF():
         self.x_train_vals, self.x_test_vals, self.y_train_vals, self.y_test_vals = train_test_split(self.x_vals, self.y_vals, test_size=0.2, random_state=42)
         self.x_train_vals = self.scaler.fit_transform(self.x_train_vals)
         self.x_test_vals = self.scaler.transform(self.x_test_vals)
-       
-        # get best parameters for SVM classifier
-        # cParam , gamma = self.getBestParams()
-
+        # candidate parameters to be evaluated
+        param = [
+            {
+                "kernel": ["rbf"],
+                "C": [70],
+                "gamma": [0.4] 
+            }
+        ]
         # request one-vs-all strategy
-        self.classifier = SVC(C = 70, gamma = 0.4, cache_size= 10000, 
-                                decision_function_shape= 'ovr')
+        svm = SVC(cache_size= 10000, decision_function_shape= 'ovr')
     
-        self.classifier.fit(self.x_train_vals, self.y_train_vals)
+        # 5-fold cross validation, each parameter set is trained in parallel
+        self.clf = GridSearchCV(svm, param,
+                cv=5, n_jobs=-1, verbose=5)
+    
+        self.clf.fit(self.x_train_vals, self.y_train_vals)
+    
+        print("\nBest parameters set:")
+        print(self.clf.best_params_)
 
     def test(self):
 
-        y_predict=self.classifier.predict(self.x_test_vals)
+        y_predict=self.clf.predict(self.x_test_vals)
         labels = self.y_train_vals
         labels.extend(self.y_test_vals)
 
@@ -65,42 +75,20 @@ class SVMRBF():
     def saveModel(self, fileName):
         # save the model to disk
         # joblib.dump(self.classifier, fileName + '.sav')
-        save_data = [self.classifier, self.scaler]
+        save_data = [self.clf, self.scaler]
         pickle.dump(save_data, open((fileName + '.sav'), 'wb+'))
 
     def loadModel(self,fileName):
         # load the model from disk
         # self.classifier = joblib.load(fileName + '.sav')
         load_data = pickle.load(open((fileName + '.sav'), 'rb'))
-        self.classifier = load_data[0]
+        self.clf = load_data[0]
         self.scaler = load_data[1]
         
     def getResult(self, x):
         x_test = self.scaler.transform(x)
-        y_pred = self.classifier.predict(x_test)
+        y_pred = self.clf.predict(x_test)
         return y_pred
-
-    def getBestParams(self):
-        # candidate parameters to be evaluated
-        param = [
-            {
-                "kernel": ["rbf"],
-                "C": [1, 70, 100],
-                "gamma": [0.01, 0.4, 1] 
-            }
-        ]
-        # request one-vs-all strategy
-        svm = SVC(cache_size= 10000, decision_function_shape= 'ovr')
-    
-        # 5-fold cross validation, each parameter set is trained in parallel
-        clf = GridSearchCV(svm, param,
-                cv=5, n_jobs=-1, verbose=5)
-    
-        clf.fit(self.x_train_vals, self.y_train_vals)
-    
-        print("\nBest parameters set:")
-        print(clf.best_params_)
-        return clf.best_params_["C"], clf.best_params_["gamma"]
         
 # if __name__ == "__main__":    
     # images = read_images_in_folder('/home/ahmed/Desktop/LettersDataset')

@@ -4,5 +4,3 @@ Letters-Dataset-Generator/LettersDataset
 __pycache__
 .vscode
 my-project-env/
-evaluation/actual/
-evaluation/predicted

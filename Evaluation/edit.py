@@ -11,9 +11,9 @@ distances = []
 accuracies = []
 
 for file_name in os.listdir(sys.argv[2]):
-    with open(os.path.join(sys.argv[1], file_name), encoding='utf8') as f:
+    with open(os.path.join(sys.argv[1], file_name)) as f:
         predicted = ''.join(f.read().split())
-    with open(os.path.join(sys.argv[2], file_name), encoding='utf8') as f:
+    with open(os.path.join(sys.argv[2], file_name)) as f:
         truth = ''.join(f.read().split())
     distance = editdistance.eval(predicted, truth)
     distances.append(distance)

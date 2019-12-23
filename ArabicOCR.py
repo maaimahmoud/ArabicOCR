@@ -120,7 +120,7 @@ def imagePreprocessing(img):
 def loop(i):
     pictureFeatures = []
     pictureLabels = []
-    actualCharacters = []
+    # actualCharacters = []
 
     image = cv2.imread(i)
 
@@ -178,7 +178,7 @@ def loop(i):
         #     del textWords[0]
 
         pictureLabels.extend(get_labels(correspondingTextWord))
-        actualCharacters += [correspondingTextWord]
+        # actualCharacters += [correspondingTextWord]
         for char in word:
             # processedCharacters += 1
             # print('Currently processing image '+filesNames[0]+' line #', segmented.index(line), ' word #', line.index(word),' char #', word.index(char))
@@ -186,9 +186,9 @@ def loop(i):
             pictureFeatures.append(currentCharFeature)  # cv2.resize(char, (100,60))
         del textWords[0]
     f = open('textFiles/'+i[i.rfind('\\')+1:-4]+'-words.txt','wb+')
-    for myWord in actualCharacters:
-        f.write(myWord.encode('utf8')+'\n'.encode('utf8'))
-    f.close()
+    # for myWord in actualCharacters:
+    #     f.write(myWord.encode('utf8')+'\n'.encode('utf8'))
+    # f.close()
 
     f = open('textFiles/'+i[i.rfind('\\')+1:-4]+'.txt','w+')
     for k in range(len(pictureFeatures)):

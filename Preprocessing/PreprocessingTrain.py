@@ -24,7 +24,7 @@ TRAINING_DATASET = '../Dataset/scanned'
 TRAINING_TEXT='../Dataset/text/'
 
 
-datasetList=list(sorted(glob.glob(TRAINING_DATASET + "*/*.png"),  key=natural_keys)[5000:7000])
+datasetList=list(sorted(glob.glob(TRAINING_DATASET + "*/*.png"),  key=natural_keys)[9000:10000])
 maxPortion=len(datasetList)
 
 
@@ -200,10 +200,10 @@ def preprocess(mode,lines_file,words_file="",chars_file="",labels_file="",datase
 if __name__ == "__main__":
 
     # specify dataset portion to segment over max is default
-    portion=2000
+    portion=1000
     #specify mode to work with, lines/word/char
     # to work with words, lines must already exist, to work with char, words must exist
-    mode="lines"
+    mode="char"
     #specify file names, they will be saved in dir specified above
     lines_file="lines.h5"
     word_file="word_10.h5"

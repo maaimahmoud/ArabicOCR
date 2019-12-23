@@ -239,8 +239,8 @@ if __name__ == "__main__":
             for i in range(len(trainingImages)):
                 print(i)
                 for j in range(len(trainingImages[i])):
-                    if (len(trainingImages[i][j]) == len(labels[i][j])):
-                        for k in range(len(trainingImages[i][j])):
+                    for k in range(len(trainingImages[i][j])):
+                        if (len(trainingImages[i][j][k]) == len(labels[i][j][k])):
                             image = np.array(trainingImages[i][j][k])
                             classifier.x_vals.append(features.getFeatures(image, False))
                             classifier.y_vals.append(labels[i][j][k])

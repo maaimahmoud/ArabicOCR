@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
-sys.path.append('../Classification')
+# sys.path.append('../Classification')
 import h5py
 import cv2
 import numpy as np
@@ -24,7 +24,7 @@ TRAINING_DATASET = '../Dataset/scanned'
 TRAINING_TEXT='../Dataset/text/'
 
 
-datasetList=list(sorted(glob.glob(TRAINING_DATASET + "*/*.png"),  key=natural_keys)[:])
+datasetList=list(sorted(glob.glob(TRAINING_DATASET + "*/*.png"),  key=natural_keys)[5000:7000])
 maxPortion=len(datasetList)
 
 
@@ -95,18 +95,18 @@ def preprocess(mode,lines_file,words_file="",chars_file="",labels_file="",datase
     j  = 1
     if mode=="lines": #lost 8 pages 21/12/2019
         if os.path.exists(hdf5_dir +lines_file):
-            print("file already exists, chaneg name or delete")
+            print("file already exists, change name or delete")
             return
         file = h5py.File(hdf5_dir +lines_file, "w")
         print("starting line seg")
         for i in datasetList[0:datasetPortion]:
-            print(i[ i.rfind('/') + 1 : -4])
+            print(i[ i.rfind('\\') + 1 : -4])
             img = cv2.imread(i)
             lines=[]
-            lines = LineSegmentation(img, imgName = i[ i.rfind('/') + 1 : -4] ,saveResults=False)
+            lines = LineSegmentation(img, imgName = i[ i.rfind('\\') + 1 : -4] ,saveResults=False)
             if len(lines)==0:
                 wrongSegmented+=1
-            store_many_hdf5(lines,i[ i.rfind('/') + 1 : -4],file)
+            store_many_hdf5(lines,i[ i.rfind('\\') + 1 : -4],file)
             j+=1
         file.close()
         print("Total Wrongly segmented pages (LineSeg) = ",wrongSegmented)
@@ -119,9 +119,9 @@ def preprocess(mode,lines_file,words_file="",chars_file="",labels_file="",datase
         lfile = h5py.File(hdf5_dir + lines_file, "r+")
         print("starting word seg")
         for i in datasetList[0:datasetPortion]:
-            img=i[ i.rfind('/') + 1 : -4]
+            img=i[ i.rfind('\\') + 1 : -4]
             print(img)
-            lines,_= read_many_hdf5(lines_file,img)        
+            lines,_= read_many_hdf5(lines_file,img)
             textWords = open(TRAINING_TEXT+img+'.txt', encoding='utf-8').read().replace('\n',' ').split(' ')
             original = len(textWords)
             calculated= 0
@@ -150,7 +150,7 @@ def preprocess(mode,lines_file,words_file="",chars_file="",labels_file="",datase
         dreadful=0
 
         for i in datasetList[0:datasetPortion]:
-            img=i[ i.rfind('/') + 1 : -4]
+            img=i[ i.rfind('\\') + 1 : -4]
             char_count=0
             text_char_count=0
             print(img)
@@ -200,10 +200,10 @@ def preprocess(mode,lines_file,words_file="",chars_file="",labels_file="",datase
 if __name__ == "__main__":
 
     # specify dataset portion to segment over max is default
-    portion=10
+    portion=2000
     #specify mode to work with, lines/word/char
     # to work with words, lines must already exist, to work with char, words must exist
-    mode="char"
+    mode="lines"
     #specify file names, they will be saved in dir specified above
     lines_file="lines.h5"
     word_file="word_10.h5"

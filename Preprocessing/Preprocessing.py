@@ -33,7 +33,7 @@ def Preprocssing(img, imgName="", textWords = 0):
     i = 0
     charError = 0
     for word in words:
-        characters.append(CharacterSegmentation(np.array(word, dtype=np.uint8), imgName = imgName, lineNumber= i + 1, wordNumber = np.ceil((i + 1)/len(lines) ), saveResults = True))
+        characters.append(CharacterSegmentation(np.array(word, dtype=np.uint8), imgName = imgName, lineNumber= i + 1, wordNumber = np.ceil((i + 1)/len(lines) ), saveResults = False))
         if len(textWords[i])-textWords[i].count('لا') != len(characters[-1]):
             # print("ERROR IN CHARACTER SEGMENTATION IN ", imgName," Word #", i)
             charError += 1
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     j = 1
     # Read Image
     start_time = timeit.default_timer()
-    for i in list(sorted(glob.glob(TRAINING_DATASET + "*/*.png"),  key=natural_keys)[2:3]):
+    for i in list(sorted(glob.glob(TRAINING_DATASET + "*/*.png"),  key=natural_keys)[1:2]):
         # print(i)
         img = cv2.imread(i)
 

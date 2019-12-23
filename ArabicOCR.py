@@ -24,41 +24,41 @@ from Classification.TextLabeling import get_labels, getCharFromLabel
 
 import h5py
 from multiprocessing import Process
-hdf5_dir = "PreprocessingOutput/1000-2000/"
-def get_dataset(chars_file,labels_file,count=-1):
-    cfile= h5py.File(hdf5_dir +chars_file, "r+")
-    imgs=[]
-    i=0
-    for img in cfile.keys(): 
-        if count!= -1 and i>=count: 
-            break
-        i+=1
-        words=[]
-        word_k= len(cfile[img].keys())
-        for word in range(word_k):
-            word_1=[]
-            for char in cfile[img][str(word)].keys():
-                word_1+=[np.array(cfile[img][str(word)][char])]
-            words+=[word_1]
-        imgs+=[words]
+# hdf5_dir = "PreprocessingOutput/1000-2000/"
+# def get_dataset(chars_file,labels_file,count=-1):
+#     cfile= h5py.File(hdf5_dir +chars_file, "r+")
+#     imgs=[]
+#     i=0
+#     for img in cfile.keys(): 
+#         if count!= -1 and i>=count: 
+#             break
+#         i+=1
+#         words=[]
+#         word_k= len(cfile[img].keys())
+#         for word in range(word_k):
+#             word_1=[]
+#             for char in cfile[img][str(word)].keys():
+#                 word_1+=[np.array(cfile[img][str(word)][char])]
+#             words+=[word_1]
+#         imgs+=[words]
      
-    lfile= h5py.File(hdf5_dir +labels_file, "r+")
-    labels=[]
-    i=0
-    for img in lfile.keys():
-        if count!= -1 and i>=count: 
-            break
-        i+=1
-        label_img=[]
-        for word in lfile[img].keys():
-            label_1=[]
-            for label in lfile[img][word].keys():
-                label_1+=[np.array(lfile[img][word][label])]
-            label_img+=[label_1]
-        labels+=[label_img]  
+#     lfile= h5py.File(hdf5_dir +labels_file, "r+")
+#     labels=[]
+#     i=0
+#     for img in lfile.keys():
+#         if count!= -1 and i>=count: 
+#             break
+#         i+=1
+#         label_img=[]
+#         for word in lfile[img].keys():
+#             label_1=[]
+#             for label in lfile[img][word].keys():
+#                 label_1+=[np.array(lfile[img][word][label])]
+#             label_img+=[label_1]
+#         labels+=[label_img]  
 
 
-    return imgs,labels
+#     return imgs,labels
 
 
 import re
@@ -114,7 +114,7 @@ def imagePreprocessing(img):
     # Segment words into characters
     for word in words:
         characters.append(CharacterSegmentation(np.array(word, dtype=np.uint8)))
-    print("lines= ",len(lines)," words= ",len(words)," chars= ",len(characters))
+    # print("lines= ",len(lines)," words= ",len(words)," chars= ",len(characters))
     return characters # [[[, , , characters], , , words] , , , lines] 
 
 def loop(i):
@@ -140,6 +140,7 @@ def loop(i):
     # print("Text: ", len(textWords), "Segmented: ", len(segmented))
     if len(textWords) != segmentedWords:
         # skippedImages += 1
+        # print(i[i.rfind('\\')+1:-4],"is skipped")
         return
     # faultyWordSegmented = False
     # if len(textWords) < segmentedWords:
@@ -185,7 +186,7 @@ def loop(i):
             currentCharFeature = features.getFeatures(char, showResults=False, black_background=True)
             pictureFeatures.append(currentCharFeature)  # cv2.resize(char, (100,60))
         del textWords[0]
-    f = open('textFiles/'+i[i.rfind('\\')+1:-4]+'-words.txt','wb+')
+    # f = open('textFiles/'+i[i.rfind('\\')+1:-4]+'-words.txt','wb+')
     # for myWord in actualCharacters:
     #     f.write(myWord.encode('utf8')+'\n'.encode('utf8'))
     # f.close()
@@ -253,7 +254,7 @@ if __name__ == "__main__":
 
             processes = []
             start_time = timeit.default_timer()
-            dataset = sorted(glob.glob(TRAINING_DATASET + "*/*.png"),  key=natural_keys)[:5]
+            dataset = sorted(glob.glob(TRAINING_DATASET + "*/*.png"),  key=natural_keys)[3000:3100]
 
             for i in list(dataset):
                 p = Process(target=loop, args=(i,))
@@ -267,6 +268,7 @@ if __name__ == "__main__":
             print('Finished All#########################################')
             import time
             time.sleep(10)
+            
             # print("processedCharacters = ", processedCharacters, "Characters from text = ", len(classifier.y_vals))
             # print("ignoredWords = ", ignoredWords, " processedWords = ", processedWords)
             # print("skipped Images = ", skippedImages, " (out of ", TotalImages,")")

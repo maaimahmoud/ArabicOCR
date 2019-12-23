@@ -33,30 +33,18 @@ class SVMRBF():
         self.scaler = MaxAbsScaler()
 
     def train(self):
-        #print(len(self.x_vals), len(self.x_vals[0]))
-        #print(len(self.y_vals))
         self.x_train_vals, self.x_test_vals, self.y_train_vals, self.y_test_vals = train_test_split(self.x_vals, self.y_vals, test_size=0.2, random_state=42)
         self.x_train_vals = self.scaler.fit_transform(self.x_train_vals)
         self.x_test_vals = self.scaler.transform(self.x_test_vals)
-        # candidate parameters to be evaluated
-        param = [
-            {
-                "kernel": ["rbf"],
-                "C": [70],
-                "gamma": [0.4] 
-            }
-        ]
-        # request one-vs-all strategy
-        svm = SVC(cache_size= 10000, decision_function_shape= 'ovr')
+
+       
+        # get best parameters for SVM classifier
+        self.classifier = self.getBestParams()
+
+        # self.classifier = SVC(C = 70, gamma = 0.4, cache_size= 10000, 
+        #                         decision_function_shape= 'ovr')
     
-        # 5-fold cross validation, each parameter set is trained in parallel
-        self.clf = GridSearchCV(svm, param,
-                cv=5, n_jobs=-1, verbose=5)
-    
-        self.clf.fit(self.x_train_vals, self.y_train_vals)
-    
-        print("\nBest parameters set:")
-        print(self.clf.best_params_)
+        # self.classifier.fit(self.x_train_vals, self.y_train_vals)
 
     def test(self):
 
@@ -64,7 +52,7 @@ class SVMRBF():
         labels = self.y_train_vals
         labels.extend(self.y_test_vals)
 
-        labels=sorted(list(set(labels)))
+        labels=sorted(list(set(np.array(labels))))
         print("\nConfusion matrix:")
         print("Labels: {0}\n".format(",".join(str(labels))))
         print(confusion_matrix(self.y_test_vals, y_predict, labels=labels))
@@ -89,6 +77,28 @@ class SVMRBF():
         x_test = self.scaler.transform(x)
         y_pred = self.clf.predict(x_test)
         return y_pred
+
+    def getBestParams(self):
+        # candidate parameters to be evaluated
+        param = [
+            {
+                "kernel": ["rbf"],
+                "C": [1, 70, 100],
+                "gamma": [0.01, 0.4, 1] 
+            }
+        ]
+        # request one-vs-all strategy
+        svm = SVC(cache_size= 10000, decision_function_shape= 'ovr')
+    
+        # 5-fold cross validation, each parameter set is trained in parallel
+        clf = GridSearchCV(svm, param,
+                cv=5, n_jobs=-1, verbose=5)
+    
+        clf.fit(self.x_train_vals, self.y_train_vals)
+    
+        print("\nBest parameters set:")
+        print(clf.best_params_)
+        return clf
         
 # if __name__ == "__main__":    
     # images = read_images_in_folder('/home/ahmed/Desktop/LettersDataset')

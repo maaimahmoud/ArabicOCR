@@ -25,30 +25,40 @@ from Classification.TextLabeling import get_labels, getCharFromLabel
 import h5py
 from multiprocessing import Process
 hdf5_dir = "PreprocessingOutput/1000-2000/"
-def get_dataset(chars_file, labels_file):
-    cfile = h5py.File(hdf5_dir + chars_file, "r+")
-    imgs = []
-    for img in cfile.keys():
-        words = []
-        for word in cfile[img].keys():
-            word_1 = []
-            for char in cfile[img][word].keys():
-                word_1 += [np.array(cfile[img][word][char])]
-            words += [word_1]
-        imgs += [words]
-
-    lfile = h5py.File(hdf5_dir + labels_file, "r+")
-    labels = []
+def get_dataset(chars_file,labels_file,count=-1):
+    cfile= h5py.File(hdf5_dir +chars_file, "r+")
+    imgs=[]
+    i=0
+    for img in cfile.keys(): 
+        if count!= -1 and i>=count: 
+            break
+        i+=1
+        words=[]
+        word_k= len(cfile[img].keys())
+        for word in range(word_k):
+            word_1=[]
+            for char in cfile[img][str(word)].keys():
+                word_1+=[np.array(cfile[img][str(word)][char])]
+            words+=[word_1]
+        imgs+=[words]
+     
+    lfile= h5py.File(hdf5_dir +labels_file, "r+")
+    labels=[]
+    i=0
     for img in lfile.keys():
-        label_img = []
+        if count!= -1 and i>=count: 
+            break
+        i+=1
+        label_img=[]
         for word in lfile[img].keys():
-            label_1 = []
+            label_1=[]
             for label in lfile[img][word].keys():
-                label_1 += [np.array(lfile[img][word][label])]
-            label_img += [label_1]
-        labels += [label_img]
+                label_1+=[np.array(lfile[img][word][label])]
+            label_img+=[label_1]
+        labels+=[label_img]  
 
-    return imgs, labels
+
+    return imgs,labels
 
 
 import re
@@ -266,12 +276,13 @@ if __name__ == "__main__":
         else:
             # trainingImages, classifier.y_vals, filesNames = readImages(TRAINING_DATASET, 0)
             print("Loading dataset")
-            trainingImages, labels = get_dataset('chars_101.h5', 'labels_101.h5')
+            trainingImages, labels = get_dataset('chars_1000.h5', 'labels_1000.h5', 200)
             print("Finished Loading dataset")
             # Get Features
             # for i in tqdm(range(len(trainingImages))):
+            print("Features Extraction")
+            print('-----------------------------')
             for i in range(len(trainingImages)):
-                print(i)
                 for j in range(len(trainingImages[i])):
                     if (len(trainingImages[i][j]) == len(labels[i][j])):
                         for k in range(len(trainingImages[i][j])):
@@ -311,15 +322,15 @@ if __name__ == "__main__":
         print('Runtime: ', (timeit.default_timer() - start_time)/60) 
 
         # Save Model
-        print('Model Saved as ' +'Models/'+ args.classifier+'-'+args.features+'.sav')
-        classifier.saveModel('Models/'+args.classifier+'-'+args.features)
+        print('Model Saved as ' +'Models/'+ args.classifier+'-'+args.features+ '-50' + '.sav')
+        classifier.saveModel('Models/'+args.classifier+'-'+args.features+ '-50')
 
     else:
         # modelFileName = input("Model filename:")
         print('Loading Model')
         print('-----------------------------')
         
-        classifier.loadModel('Models/'+args.classifier+'-'+args.features)
+        classifier.loadModel('Models/'+args.classifier+'-'+args.features + '-50')
 
         print('Load Dataset Phase')
         print('-----------------------------')
@@ -329,13 +340,22 @@ if __name__ == "__main__":
         print('Processing')
         print('-----------------------------')
 
+         # create output directory
+        directory = "./output/text/"
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
+        runtime_file = open("./output/running_time.txt",'w+')
+        # read test images and print corresponding text
+
         for i in tqdm(sorted(glob.glob(TESTING_DATASET + "*/*.png"))):
+            textFileName = os.path.basename(i)[:-4]+'.txt'#.replace('scanned','text')
+            f = open(directory + textFileName,'wb+') 
             image = cv2.imread(i)
-            textFileName = i[:-4]+'.txt'#.replace('scanned','text')
+            start_time = timeit.default_timer()     # start timer
             segmented = imagePreprocessing(image) # Get characters of image
-            print(len(segmented))
+            # print(len(segmented))
             # [[[, , , characters], , , words] , , , lines]
-            f = open(textFileName,'wb+') 
             for word in segmented:
                 for char in word:
                     currentCharFeature = features.getFeatures(char, False)
@@ -345,5 +365,7 @@ if __name__ == "__main__":
                     f.write(char.encode('utf8'))
                 f.write(' '.encode('utf8'))
                 # f.write('\n')
+            runtime_file.write(str(timeit.default_timer() - start_time) + '\n')  # write running time to file
             f.close()
             # filesNames.pop(0)
+        runtime_file.close() 

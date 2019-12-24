@@ -222,7 +222,7 @@ if __name__ == "__main__":
     classifier = classifierClass(features.featuresNumber)
     ###########################
 
-    mode = int(input("1.Train\n2.Test existing Model\n"))
+    mode = int(input("1.Segment\n2.Train\n3.Test existing Model\n"))
 
     if mode == 1:
         # set start time
@@ -230,90 +230,61 @@ if __name__ == "__main__":
 
         #trainingImages, classifier.y_vals, __ = readImages(TRAINING_DATASET, trainTest = 0)
         
-        if TRAINING_DATASET == './Dataset/scanned':
-            # os.listdir("Dataset/scanned/")
-            print("Reading Dataset")
+        # if TRAINING_DATASET == './Dataset/scanned':
+        # os.listdir("Dataset/scanned/")
+        print("Reading  dataset to segment")
 
-            trainingImages = []
-            imagesNames = []
+        trainingImages = []
+        imagesNames = []
 
-            # for i in tqdm(sorted(glob.glob(TRAINING_DATASET + "*/*.png"),  key=natural_keys)):
-            #     trainingImages += [cv2.imread(i)]
-            #     imagesNames += [i[:-4]]
+        # for i in tqdm(sorted(glob.glob(TRAINING_DATASET + "*/*.png"),  key=natural_keys)):
+        #     trainingImages += [cv2.imread(i)]
+        #     imagesNames += [i[:-4]]
 
-            print('-----------------------------')
-            print("Preprocessing and feature Extraction Phase")
+        print('-----------------------------')
+        print("Preprocessing and feature Extraction Phase")
 
-            processedCharacters = 0
-            ignoredWords = 0
-            processedWords = 0
-            segmented = None
+        processedCharacters = 0
+        ignoredWords = 0
+        processedWords = 0
+        segmented = None
 
-            skippedImages = 0
-            TotalImages = 0
+        skippedImages = 0
+        TotalImages = 0
 
-            processes = []
-            start_time = timeit.default_timer()
-            dataset = sorted(glob.glob(TRAINING_DATASET + "*/*.png"),  key=natural_keys)[4200:4400]
+        processes = []
+        start_time = timeit.default_timer()
+        dataset = sorted(glob.glob(TRAINING_DATASET + "*/*.png"),  key=natural_keys)[1001:1003] # 3000 DONE
 
-            for i in list(dataset):
-                p = Process(target=loop, args=(i,))
-                p.start()
-                processes += [p]
+        for i in list(dataset):
+            p = Process(target=loop, args=(i,))
+            p.start()
+            processes += [p]
 
-            for p in processes:
-                p.join()
+        for p in processes:
+            p.join()
 
-            print("running time = ", timeit.default_timer() - start_time)
-            print('Finished All#########################################')
-            import time
-            time.sleep(10)
-            
-            # print("processedCharacters = ", processedCharacters, "Characters from text = ", len(classifier.y_vals))
-            # print("ignoredWords = ", ignoredWords, " processedWords = ", processedWords)
-            # print("skipped Images = ", skippedImages, " (out of ", TotalImages,")")
-            print('-----------------------------')
-        else:
-            # trainingImages, classifier.y_vals, filesNames = readImages(TRAINING_DATASET, 0)
-            print("Loading dataset")
-            trainingImages, labels = get_dataset('chars_1000.h5', 'labels_1000.h5', 200)
-            print("Finished Loading dataset")
-            # Get Features
-            # for i in tqdm(range(len(trainingImages))):
-            print("Features Extraction")
-            print('-----------------------------')
-            for i in range(len(trainingImages)):
-                for j in range(len(trainingImages[i])):
-                    if (len(trainingImages[i][j]) == len(labels[i][j])):
-                        for k in range(len(trainingImages[i][j])):
-                            image = np.array(trainingImages[i][j][k])
-                            classifier.x_vals.append(features.getFeatures(image, False))
-                            classifier.y_vals.append(labels[i][j][k])
-        
-        # Train classifer
+        print("running time = ", timeit.default_timer() - start_time)
+        print('Finished All#########################################')
+
+    elif mode==2:
+        featuresList=list(glob.glob("textFiles" + "/*.txt"))
+        for filepath in featuresList:
+            with open(filepath) as fp:
+                for line in fp:
+                    charData=line.replace('\n','').split(' ')
+                    del charData[-1]
+                    label=int(charData[0])
+                    charData= [float(i) for i in charData[1:len(charData)]]
+                    print(len(charData),label,charData)
+                    classifier.x_vals.append(charData)
+                    classifier.y_vals.append(label)
+        print("Done reading segmented files")
+        print('-----------------------------')
         print('Training Phase')
         print('-----------------------------')
         classifier.train()
-        
-        # for i in tqdm(sorted(glob.glob(TESTING_DATASET + "*/*.png"))):
-        #     image = cv2.imread(i)
-        #     textFileName = i[:-4]+'.txt'#.replace('scanned','text')
-        #     segmented = imagePreprocessing(image) # Get characters of image
-        #     print(len(segmented))
-        #     # [[[, , , characters], , , words] , , , lines]
-        #     f = open(textFileName,'w') 
-        #     for word in segmented:
-        #         for char in word:
-        #             currentCharFeature = features.getFeatures(char, False)
-        #             classificationResult = classifier.getResult([currentCharFeature])
-        #             # char = 'أ'
-        #             char = getCharFromLabel(classificationResult)
-        #             f.write(char)
-        #         f.write(' ')
-        #         # f.write('\n')
-        #     f.close()
 
-        # Test Model
         print('Testing Phase')
         print('-----------------------------')
         classifier.test()

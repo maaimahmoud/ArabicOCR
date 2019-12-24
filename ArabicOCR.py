@@ -18,7 +18,7 @@ import numpy as np
 import os
 from Preprocessing.Lines import LineSegmentation
 from Preprocessing.Words import WordSegmentation
-from Preprocessing.CharactersR import CharacterSegmentation
+from Preprocessing.Characters import CharacterSegmentation
 from Classification.TextLabeling import get_labels, getCharFromLabel
 # from Preprocessing.PreprocessingTrain import get_dataset
 
@@ -254,7 +254,7 @@ if __name__ == "__main__":
 
             processes = []
             start_time = timeit.default_timer()
-            dataset = sorted(glob.glob(TRAINING_DATASET + "*/*.png"),  key=natural_keys)[3000:3100]
+            dataset = sorted(glob.glob(TRAINING_DATASET + "*/*.png"),  key=natural_keys)[4200:4400]
 
             for i in list(dataset):
                 p = Process(target=loop, args=(i,))

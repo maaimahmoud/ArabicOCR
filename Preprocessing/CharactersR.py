@@ -34,7 +34,7 @@ def CharacterSegmentation(gray, imgName = "0", lineNumber = 0, wordNumber = 0, s
     coords = cv2.findNonZero(gray)
     x,y,w,h = cv2.boundingRect(coords)
     word = gray[y:y+h, x:x+w]
-
+    print('maaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaii')
     # print("word shaape", word.shape) # 0 is h and 1 is w
     charCount=math.ceil(word.shape[1]/avgLetterWidth)
     avgWidth=math.ceil(word.shape[1]/charCount)

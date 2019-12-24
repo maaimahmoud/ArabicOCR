@@ -16,7 +16,7 @@ from sklearn.svm import SVC , LinearSVC
 
 # import joblib
 import pickle
-
+chunk_size = 100
 class SVMRBF():
 
     def __init__(self, featuresNumber):
@@ -34,7 +34,9 @@ class SVMRBF():
 
     def train(self):
         self.x_train_vals, self.x_test_vals, self.y_train_vals, self.y_test_vals = train_test_split(self.x_vals, self.y_vals, test_size=0.2, random_state=42)
+        
         self.x_train_vals = self.scaler.fit_transform(self.x_train_vals)
+
         self.x_test_vals = self.scaler.transform(self.x_test_vals)
 
        
@@ -94,8 +96,11 @@ class SVMRBF():
         clf = GridSearchCV(svm, param,
                 cv=5, n_jobs=-1, verbose=5)
     
-        clf.fit(self.x_train_vals, self.y_train_vals)
-    
+        for chunk in range(0,chunk_size, len(self.x_train_vals) ):
+            clf.fit(self.x_train_vals[chunk:min(len(self.x_train_vals), chunk+chunk_size)], self.y_train_vals[chunk:min(len(self.x_train_vals), chunk+chunk_size)])
+            save_data = [self.clf, self.scaler]
+            pickle.dump(save_data, open(('Models/SVMRBF-chunk'+str(chunk) + '.sav'), 'wb+'))
+        
         print("\nBest parameters set:")
         print(clf.best_params_)
         return clf

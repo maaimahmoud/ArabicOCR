@@ -5,6 +5,7 @@ import numpy as np
 import keras
 from keras.models import Sequential
 from keras.layers import Dense
+from keras.callbacks import ModelCheckpoint
 
 from sklearn.model_selection import train_test_split
 
@@ -55,8 +56,16 @@ class ANN():
         
         print("x_vals_train = ", self.x_vals_train.shape, " y_vals_train = ", self.y_vals_train.shape)
 
+
+        ###############
+        #Check point
+        filepath="Models/ANN/weights-improvement-{epoch:02d}-{val_accuracy:.2f}.hdf5"
+        checkpoint = ModelCheckpoint(filepath, monitor='val_accuracy', verbose=1, save_best_only=True, mode='max')
+        callbacks_list = [checkpoint]
+
+        ###############
         # Fitting the ANN to the Training set
-        self.classifier.fit(self.x_vals_train, self.y_vals_train, batch_size = 10, epochs = 50)
+        self.classifier.fit(self.x_vals_train, self.y_vals_train, batch_size = 10, epochs = 50, callbacks=callbacks_list, verbose=0)
 
 
 

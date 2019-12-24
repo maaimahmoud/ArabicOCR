@@ -254,7 +254,7 @@ if __name__ == "__main__":
 
         processes = []
         start_time = timeit.default_timer()
-        dataset = sorted(glob.glob(TRAINING_DATASET + "*/*.png"),  key=natural_keys)[1001:1003] # 3000 DONE
+        dataset = sorted(glob.glob(TRAINING_DATASET + "*/*.png"),  key=natural_keys)[4400:4600] # 3000 DONE
 
         for i in list(dataset):
             p = Process(target=loop, args=(i,))
@@ -268,15 +268,15 @@ if __name__ == "__main__":
         print('Finished All#########################################')
 
     elif mode==2:
-        featuresList=list(glob.glob("textFiles" + "/*.txt"))
-        for filepath in featuresList:
+        featuresList=list(glob.glob("textFiles" + "/*.txt"))[:1000]
+        for filepath in tqdm(featuresList):
             with open(filepath) as fp:
                 for line in fp:
                     charData=line.replace('\n','').split(' ')
                     del charData[-1]
                     label=int(charData[0])
                     charData= [float(i) for i in charData[1:len(charData)]]
-                    print(len(charData),label,charData)
+                    # print(len(charData),label,charData)
                     classifier.x_vals.append(charData)
                     classifier.y_vals.append(label)
         print("Done reading segmented files")
